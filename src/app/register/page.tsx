@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Sparkles, Loader2, Gift } from "lucide-react";
+import { Cpu, Loader2, Gift, ArrowRight } from "lucide-react";
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -37,28 +37,30 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#090d16] flex items-center justify-center p-4">
-      <div className="w-full max-w-md bg-slate-900/60 border border-slate-800 p-8 rounded-2xl shadow-xl backdrop-blur-md">
+    <div className="min-h-screen bg-[#040711] flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute inset-0 bg-grid-pattern mask-radial opacity-50 pointer-events-none" />
+
+      <div className="w-full max-w-md glass-panel p-8 rounded-2xl relative z-10">
         <div className="text-center mb-6">
-          <Link href="/" className="inline-flex items-center gap-2 mb-4">
-            <div className="h-9 w-9 rounded-xl bg-gradient-to-tr from-indigo-500 to-purple-600 flex items-center justify-center text-white">
-              <Sparkles className="h-5 w-5" />
+          <Link href="/" className="inline-flex items-center gap-2 mb-4 group">
+            <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/30 group-hover:scale-105 transition">
+              <Cpu className="h-4 w-4" />
             </div>
-            <span className="font-bold text-lg text-white">Nusantara AI</span>
+            <span className="font-bold text-base text-white">Nusantara AI</span>
           </Link>
-          <h2 className="text-2xl font-bold text-white">Buat Akun Developer</h2>
-          <p className="text-sm text-slate-400 mt-1">Dapatkan API key siap pakai dalam hitungan detik</p>
+          <h2 className="text-2xl font-bold text-white tracking-tight">Buat Akun Developer</h2>
+          <p className="text-xs text-slate-400 mt-1">Dapatkan API key siap pakai dalam hitungan detik</p>
         </div>
 
-        <div className="mb-6 p-3.5 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-3">
-          <Gift className="h-5 w-5 text-indigo-400 shrink-0" />
+        <div className="mb-6 p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-2.5">
+          <Gift className="h-4 w-4 text-indigo-400 shrink-0" />
           <p className="text-xs text-indigo-300">
-            <strong>Bonus Pendaftaran:</strong> Saldo gratis Rp 10.000 langsung masuk ke akun Anda setelah daftar!
+            <strong>Bonus Pendaftaran:</strong> Saldo gratis Rp 10.000 otomatis aktif di akun baru Anda.
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-sm text-center">
+          <div className="mb-6 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center">
             {error}
           </div>
         )}
@@ -72,7 +74,7 @@ export default function RegisterPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Budi Santoso"
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 transition"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#030611] border border-white/[0.08] text-white placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 transition"
             />
           </div>
 
@@ -83,8 +85,8 @@ export default function RegisterPage() {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="budi@email.com"
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 transition"
+              placeholder="budi@domain.com"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#030611] border border-white/[0.08] text-white placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 transition"
             />
           </div>
 
@@ -96,14 +98,14 @@ export default function RegisterPage() {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimal 6 karakter"
-              className="w-full px-4 py-2.5 rounded-xl bg-slate-950/60 border border-slate-800 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-indigo-500 transition"
+              className="w-full px-3.5 py-2.5 rounded-xl bg-[#030611] border border-white/[0.08] text-white placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 transition"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-purple-600 hover:from-indigo-600 hover:to-purple-700 text-white font-medium text-sm flex items-center justify-center gap-2 transition disabled:opacity-50 shadow-md shadow-indigo-500/20"
+            className="w-full mt-2 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs flex items-center justify-center gap-2 transition disabled:opacity-50 shadow-md shadow-indigo-600/20"
           >
             {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Daftar & Klaim Saldo Rp 10.000"}
           </button>
