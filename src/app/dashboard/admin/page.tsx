@@ -11,6 +11,8 @@ import {
   Loader2,
   RefreshCw,
   Search,
+  PlusCircle,
+  Filter,
 } from "lucide-react";
 
 interface AdminTx {
@@ -36,6 +38,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("ALL");
   const [error, setError] = useState("");
 
   const fetchData = async () => {
@@ -93,15 +96,48 @@ export default function AdminPage() {
     }
   };
 
+  const handleManualBalance = async (userId: string, userEmail: string) => {
+    const input = prompt(`Masukkan jumlah saldo bonus (Rp) yang ingin ditambahkan ke ${userEmail}:`, "50000");
+    if (!input) return;
+    const amount = Number(input);
+    if (isNaN(amount) || amount <= 0) {
+      alert("Jumlah saldo tidak valid.");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/balance`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ amount, action: "add" }),
+      });
+      const d = await res.json();
+      if (!res.ok) throw new Error(d.error || "Gagal menambahkan saldo.");
+      alert(d.message);
+      fetchData();
+    } catch (err: any) {
+      alert(err.message);
+    }
+  };
+
   const filteredTxs =
     data?.transactions.filter((t) => {
       const q = search.toLowerCase();
-      return (
+      const matchesSearch =
         t.orderId.toLowerCase().includes(q) ||
         t.user?.email.toLowerCase().includes(q) ||
         t.user?.name.toLowerCase().includes(q) ||
-        t.status.toLowerCase().includes(q)
-      );
+        t.status.toLowerCase().includes(q);
+
+      if (!matchesSearch) return false;
+
+      if (statusFilter === "PENDING") {
+        return t.status === "PENDING" || t.status === "WAITING_CONFIRMATION";
+      }
+      if (statusFilter === "PAID") return t.status === "PAID";
+      if (statusFilter === "FAILED") return t.status === "FAILED";
+
+      return true;
     }) || [];
 
   if (loading && !data) {
@@ -180,10 +216,29 @@ export default function AdminPage() {
         </div>
       </div>
 
-      {/* TRANSACTIONS TABLE */}
+      {/* FILTER TABS & SEARCH */}
       <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-          <h2 className="text-base font-semibold text-white">Daftar Transaksi Top Up</h2>
+          <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0">
+            {[
+              { key: "ALL", label: "Semua" },
+              { key: "PENDING", label: `Perlu Verifikasi (${data?.stats.pendingCount || 0})` },
+              { key: "PAID", label: "Berhasil" },
+              { key: "FAILED", label: "Ditolak" },
+            ].map((tab) => (
+              <button
+                key={tab.key}
+                onClick={() => setStatusFilter(tab.key)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition ${
+                  statusFilter === tab.key
+                    ? "bg-indigo-600 text-white shadow-md shadow-indigo-600/20"
+                    : "bg-slate-950/80 text-slate-400 hover:text-white border border-slate-800"
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
 
           <div className="relative w-full sm:w-64">
             <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" />
@@ -208,7 +263,7 @@ export default function AdminPage() {
                   <th className="pb-3">Pengguna</th>
                   <th className="pb-3">Nominal Masuk</th>
                   <th className="pb-3">Status</th>
-                  <th className="pb-3 text-right">Aksi Verifikasi</th>
+                  <th className="pb-3 text-right">Aksi Admin</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-800/60 text-slate-300">
@@ -223,8 +278,15 @@ export default function AdminPage() {
                     <td className="py-3.5">
                       <div className="font-medium text-slate-200">{tx.user?.name}</div>
                       <div className="text-[11px] text-slate-400 font-mono">{tx.user?.email}</div>
-                      <div className="text-[10px] text-indigo-400 mt-0.5">
-                        Saldo saat ini: Rp {tx.user?.balance.toLocaleString("id-ID")}
+                      <div className="text-[10px] text-indigo-400 mt-0.5 flex items-center gap-1.5">
+                        <span>Saldo: Rp {tx.user?.balance.toLocaleString("id-ID")}</span>
+                        <button
+                          onClick={() => handleManualBalance(tx.user.id, tx.user.email)}
+                          className="text-[10px] text-emerald-400 hover:text-emerald-300 underline"
+                          title="Beri bonus saldo manual"
+                        >
+                          + Bonus
+                        </button>
                       </div>
                     </td>
                     <td className="py-3.5">
@@ -277,6 +339,7 @@ export default function AdminPage() {
                             onClick={() => handleReject(tx.id)}
                             disabled={actionLoading === tx.id}
                             className="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-red-500/20 text-slate-400 hover:text-red-400 text-xs transition"
+                            title="Tolak Transaksi"
                           >
                             <XCircle className="h-3.5 w-3.5" />
                           </button>

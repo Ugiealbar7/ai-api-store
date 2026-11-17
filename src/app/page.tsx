@@ -5,6 +5,7 @@ import { Sparkles, Zap, ShieldCheck, QrCode, Terminal, CheckCircle2, ArrowRight 
 
 export default function Home() {
   const models = getModelDisplayPrices();
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || "https://ai-api-store-iota.vercel.app";
 
   return (
     <div className="min-h-screen bg-[#090d16]">
@@ -30,7 +31,7 @@ export default function Home() {
 
           <p className="text-lg sm:text-xl text-slate-400 max-w-3xl mx-auto mb-10 leading-relaxed">
             Gunakan GPT-4o, Claude 3.7 Sonnet, DeepSeek R1, dan Gemini dalam satu endpoint standar OpenAI.
-            Tanpa perlu kartu kredit internasional — bayar instan via <strong>QRIS, GoPay, dan Transfer Bank</strong>.
+            Tanpa kartu kredit internasional — bayar instan via <strong>QRIS, GoPay, OVO, BCA, dan Transfer Bank</strong>.
           </p>
 
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
@@ -57,7 +58,7 @@ export default function Home() {
           <div className="text-center mb-10">
             <h2 className="text-2xl sm:text-3xl font-bold text-white mb-3">100% Kompatibel dengan SDK OpenAI</h2>
             <p className="text-slate-400 text-sm sm:text-base">
-              Cukup ganti <code className="text-indigo-300 bg-indigo-950/50 px-2 py-0.5 rounded">baseURL</code> dan gunakan di Cursor, Cline, NextChat, Python, atau Node.js.
+              Cukup ganti <code className="text-indigo-300 bg-indigo-950/50 px-2 py-0.5 rounded">baseURL</code> dan langsung gunakan di Cursor, Cline, NextChat, Python, atau Node.js.
             </p>
           </div>
 
@@ -74,13 +75,13 @@ export default function Home() {
               </span>
             </div>
             <pre className="p-5 text-xs sm:text-sm text-slate-300 font-mono overflow-x-auto leading-relaxed">
-{`curl https://api.nusantara-ai.com/api/v1/chat/completions \\
+{`curl ${appUrl}/api/v1/chat/completions \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer sk-live-xxxxxxxxxxxxxxxxxxxx" \\
   -d '{
     "model": "deepseek-reasoner",
     "messages": [
-      {"role": "user", "content": "Jelaskan cara kerja quantum computing"}
+      {"role": "user", "content": "Jelaskan cara kerja quantum computing secara ringkas."}
     ],
     "stream": true
   }'`}
@@ -141,7 +142,7 @@ export default function Home() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6">
           <div className="text-center max-w-3xl mx-auto mb-16">
             <h2 className="text-3xl sm:text-4xl font-bold text-white mb-4">Mengapa Memilih Nusantara AI?</h2>
-            <p className="text-slate-400">Solusi terbaik bagi developer dan bisnis di Indonesia.</p>
+            <p className="text-slate-400">Solusi terbaik bagi developer, mahasiswa, dan bisnis di Indonesia.</p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -151,7 +152,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-bold text-white mb-3">Bayar Instan QRIS & Rupiah</h3>
               <p className="text-slate-400 text-sm leading-relaxed">
-                Tidak butuh kartu kredit berlogo Visa/Mastercard luar negeri. Top-up saldo mulai Rp 10.000 dengan QRIS dari BCA, Mandiri, GoPay, OVO, atau ShopeePay.
+                Tidak butuh kartu kredit berlogo Visa/Mastercard luar negeri. Top-up saldo mulai Rp 10.000 dengan QRIS dari BCA, Mandiri, BRI, GoPay, OVO, ShopeePay, atau DANA.
               </p>
             </div>
 
@@ -171,7 +172,7 @@ export default function Home() {
               </div>
               <h3 className="text-xl font-bold text-white mb-3">Aman & Terpantau</h3>
               <p className="text-slate-400 text-sm leading-relaxed">
-                Pantau setiap token dan rupiah yang terpotong melalui log riwayat detail. Buat dan cabut API key sesuka hati kapan saja.
+                Pantau setiap token dan rupiah yang terpotong melalui log riwayat pemakaian real-time. Buat dan cabut API key sesuka hati kapan saja.
               </p>
             </div>
           </div>

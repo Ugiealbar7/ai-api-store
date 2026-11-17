@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import {
   Wallet,
@@ -14,9 +14,11 @@ import {
   AlertTriangle,
   ArrowRight,
   RefreshCw,
+  Sparkles,
 } from "lucide-react";
 
 interface ActiveInvoice {
+  transactionId?: string;
   orderId: string;
   totalAmount: number;
   baseAmount: number;
@@ -33,11 +35,14 @@ export default function TopUpPage() {
   const [confirmLoading, setConfirmLoading] = useState(false);
   const [error, setError] = useState("");
   const [copied, setCopied] = useState(false);
+  const [copiedOrderId, setCopiedOrderId] = useState(false);
   const [activeInvoice, setActiveInvoice] = useState<ActiveInvoice | null>(null);
   const [confirmed, setConfirmed] = useState(false);
+  const [isPaidSuccess, setIsPaidSuccess] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
 
-  const presets = [10000, 20000, 50000, 100000, 250000, 500000];
+  const presets = [10000, 25000, 50000, 100000, 250000, 500000];
+  const pollingRef = useRef<NodeJS.Timeout | null>(null);
 
   const fetchHistory = () => {
     fetch("/api/topup/charge")
@@ -45,6 +50,16 @@ export default function TopUpPage() {
       .then((data) => {
         if (data.success && data.transactions) {
           setHistory(data.transactions);
+
+          // Cek apakah invoice aktif sudah dibayar
+          if (activeInvoice) {
+            const currentTx = data.transactions.find(
+              (t: any) => t.orderId === activeInvoice.orderId
+            );
+            if (currentTx?.status === "PAID") {
+              setIsPaidSuccess(true);
+            }
+          }
         }
       })
       .catch(() => {});
@@ -53,6 +68,21 @@ export default function TopUpPage() {
   useEffect(() => {
     fetchHistory();
   }, []);
+
+  // Polling otomatis setiap 5 detik saat invoice aktif untuk mendeteksi persetujuan admin
+  useEffect(() => {
+    if (activeInvoice && !isPaidSuccess) {
+      pollingRef.current = setInterval(() => {
+        fetchHistory();
+      }, 5000);
+    } else {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    }
+
+    return () => {
+      if (pollingRef.current) clearInterval(pollingRef.current);
+    };
+  }, [activeInvoice, isPaidSuccess]);
 
   const handleCreateInvoice = async () => {
     const amount = customAmount ? Number(customAmount) : selectedAmount;
@@ -64,6 +94,7 @@ export default function TopUpPage() {
     setLoading(true);
     setError("");
     setConfirmed(false);
+    setIsPaidSuccess(false);
 
     try {
       const res = await fetch("/api/topup/charge", {
@@ -116,10 +147,18 @@ export default function TopUpPage() {
     setTimeout(() => setCopied(false), 2000);
   };
 
+  const copyOrderId = () => {
+    if (!activeInvoice) return;
+    navigator.clipboard.writeText(activeInvoice.orderId);
+    setCopiedOrderId(true);
+    setTimeout(() => setCopiedOrderId(false), 2000);
+  };
+
   const getWhatsAppUrl = () => {
     if (!activeInvoice) return "#";
+    const adminPhone = process.env.NEXT_PUBLIC_ADMIN_WHATSAPP || "62895325852554";
     const msg = `Halo Admin Aiugi Service, saya sudah transfer pembayaran Top Up Saldo API sebesar Rp ${activeInvoice.totalAmount.toLocaleString("id-ID")} dengan Order ID: ${activeInvoice.orderId}. Mohon segera diverifikasi. Terima kasih!`;
-    return `https://wa.me/?text=${encodeURIComponent(msg)}`;
+    return `https://wa.me/${adminPhone.replace(/\D/g, "")}?text=${encodeURIComponent(msg)}`;
   };
 
   return (
@@ -132,7 +171,7 @@ export default function TopUpPage() {
           </span>
         </h1>
         <p className="text-sm text-slate-400 mt-1">
-          Scan QRIS menggunakan BCA, Mandiri, BRI, BNI, GoPay, OVO, ShopeePay, atau DANA. Saldo masuk setelah konfirmasi.
+          Scan QRIS menggunakan BCA, Mandiri, BRI, BNI, GoPay, OVO, ShopeePay, atau DANA. Saldo masuk otomatis setelah verifikasi.
         </p>
       </div>
 
@@ -148,107 +187,151 @@ export default function TopUpPage() {
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-6 border-b border-slate-800">
             <div>
               <span className="text-xs font-mono text-indigo-400 tracking-wider">TAGIHAN PEMBAYARAN</span>
-              <h2 className="text-lg font-bold text-white mt-0.5">Order ID: {activeInvoice.orderId}</h2>
+              <div className="flex items-center gap-2 mt-0.5">
+                <h2 className="text-lg font-bold text-white">Order ID: {activeInvoice.orderId}</h2>
+                <button
+                  onClick={copyOrderId}
+                  className="p-1 text-slate-400 hover:text-white rounded transition"
+                  title="Salin Order ID"
+                >
+                  {copiedOrderId ? (
+                    <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+                  ) : (
+                    <Copy className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
               <p className="text-xs text-slate-400 mt-1">
                 Merchant: <span className="font-semibold text-slate-200">{activeInvoice.merchantName}</span> • NMID: {activeInvoice.nmid}
               </p>
             </div>
             <button
-              onClick={() => setActiveInvoice(null)}
+              onClick={() => {
+                setActiveInvoice(null);
+                setIsPaidSuccess(false);
+              }}
               className="text-xs text-slate-400 hover:text-white underline"
             >
-              ← Ganti Nominal
+              ← Buat Tagihan Baru
             </button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 items-center">
-            {/* QRIS Image Container */}
-            <div className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl shadow-inner border border-slate-200">
-              <div className="relative w-64 h-80 sm:w-72 sm:h-96">
-                <Image
-                  src={activeInvoice.qrImageUrl}
-                  alt="QRIS Aiugi Service"
-                  fill
-                  className="object-contain"
-                  priority
-                />
+          {isPaidSuccess ? (
+            <div className="py-12 text-center space-y-4">
+              <div className="h-16 w-16 bg-emerald-500/20 border border-emerald-500/40 rounded-full flex items-center justify-center mx-auto text-emerald-400">
+                <CheckCircle2 className="h-10 w-10" />
               </div>
-              <p className="text-[11px] text-slate-500 text-center font-medium mt-2">
-                SATU QRIS UNTUK SEMUA BANK & E-WALLET
+              <h3 className="text-2xl font-bold text-white">Pembayaran Sukses!</h3>
+              <p className="text-slate-300 text-sm max-w-md mx-auto">
+                Saldo sebesar <strong className="text-emerald-400">Rp {activeInvoice.totalAmount.toLocaleString("id-ID")}</strong> telah berhasil ditambahkan ke akun Anda!
               </p>
+              <div className="pt-4 flex items-center justify-center gap-3">
+                <button
+                  onClick={() => {
+                    setActiveInvoice(null);
+                    setIsPaidSuccess(false);
+                    window.location.reload();
+                  }}
+                  className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs transition"
+                >
+                  Kembali ke Dashboard
+                </button>
+              </div>
             </div>
-
-            {/* Transfer Instructions & Amount */}
-            <div className="space-y-6">
-              <div className="p-4 rounded-xl bg-slate-950 border border-slate-800">
-                <span className="text-xs text-slate-400 block mb-1">Total yang Harus Ditransfer:</span>
-                <div className="flex items-center justify-between">
-                  <div className="text-3xl font-extrabold text-emerald-400 font-mono">
-                    Rp {activeInvoice.totalAmount.toLocaleString("id-ID")}
-                  </div>
-                  <button
-                    onClick={copyAmount}
-                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition"
-                  >
-                    <Copy className="h-3.5 w-3.5" />
-                    <span>{copied ? "Disalin!" : "Salin"}</span>
-                  </button>
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 items-center">
+              {/* QRIS Image Container */}
+              <div className="flex flex-col items-center justify-center p-4 bg-white rounded-2xl shadow-inner border border-slate-200">
+                <div className="relative w-64 h-80 sm:w-72 sm:h-96">
+                  <Image
+                    src={activeInvoice.qrImageUrl}
+                    alt="QRIS Aiugi Service"
+                    fill
+                    className="object-contain"
+                    priority
+                  />
                 </div>
-                <div className="mt-2 text-[11px] text-amber-400/90 flex items-center gap-1.5">
-                  <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                  <span>Termasuk kode unik <b>Rp {activeInvoice.uniqueCode}</b> agar verifikasi cepat dan otomatis.</span>
-                </div>
+                <p className="text-[11px] text-slate-500 text-center font-medium mt-2">
+                  SATU QRIS UNTUK SEMUA BANK & E-WALLET
+                </p>
               </div>
 
-              {/* Step by step */}
-              <div className="space-y-2.5 text-xs text-slate-300">
-                <h4 className="font-semibold text-white text-sm">Langkah Pembayaran:</h4>
-                <ol className="space-y-2 list-decimal list-inside text-slate-400">
-                  <li>Buka <b>BCA, Mandiri, BRI, BNI, GoPay, OVO, ShopeePay, atau DANA</b>.</li>
-                  <li>Pilih menu <b>Scan QRIS</b> dan arahkan ke barcode di samping.</li>
-                  <li>Masukkan nominal persis <b>Rp {activeInvoice.totalAmount.toLocaleString("id-ID")}</b>.</li>
-                  <li>Selesaikan pembayaran dan klik tombol konfirmasi di bawah.</li>
-                </ol>
-              </div>
-
-              {confirmed ? (
-                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-3">
-                  <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400" />
-                  <div>
-                    <p className="font-semibold">Konfirmasi Berhasil Dikirim!</p>
-                    <p className="text-slate-400 mt-0.5">Admin sedang memverifikasi mutasi. Saldo Anda akan otomatis bertambah sebentar lagi.</p>
+              {/* Transfer Instructions & Amount */}
+              <div className="space-y-6">
+                <div className="p-4 rounded-xl bg-slate-950 border border-slate-800">
+                  <span className="text-xs text-slate-400 block mb-1">Total yang Harus Ditransfer:</span>
+                  <div className="flex items-center justify-between">
+                    <div className="text-3xl font-extrabold text-emerald-400 font-mono">
+                      Rp {activeInvoice.totalAmount.toLocaleString("id-ID")}
+                    </div>
+                    <button
+                      onClick={copyAmount}
+                      className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs font-medium transition"
+                    >
+                      <Copy className="h-3.5 w-3.5" />
+                      <span>{copied ? "Disalin!" : "Salin"}</span>
+                    </button>
+                  </div>
+                  <div className="mt-2 text-[11px] text-amber-400/90 flex items-center gap-1.5">
+                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                    <span>
+                      Termasuk kode unik <b>Rp {activeInvoice.uniqueCode}</b> agar verifikasi tepat dan cepat.
+                    </span>
                   </div>
                 </div>
-              ) : (
-                <div className="space-y-3">
-                  <button
-                    onClick={handleConfirmPayment}
-                    disabled={confirmLoading}
-                    className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-500/20 disabled:opacity-50"
-                  >
-                    {confirmLoading ? (
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                    ) : (
-                      <>
-                        <CheckCircle2 className="h-4 w-4" />
-                        <span>Saya Sudah Bayar (Konfirmasi)</span>
-                      </>
-                    )}
-                  </button>
 
-                  <a
-                    href={getWhatsAppUrl()}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 font-medium text-xs flex items-center justify-center gap-2 transition border border-slate-700"
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    <span>Konfirmasi Cepat via WhatsApp</span>
-                  </a>
+                {/* Step by step */}
+                <div className="space-y-2.5 text-xs text-slate-300">
+                  <h4 className="font-semibold text-white text-sm">Langkah Pembayaran:</h4>
+                  <ol className="space-y-2 list-decimal list-inside text-slate-400">
+                    <li>Buka <b>BCA, Mandiri, BRI, BNI, GoPay, OVO, ShopeePay, atau DANA</b>.</li>
+                    <li>Pilih menu <b>Scan QRIS</b> dan arahkan ke barcode di samping.</li>
+                    <li>Pastikan nominal transfer persis <b>Rp {activeInvoice.totalAmount.toLocaleString("id-ID")}</b>.</li>
+                    <li>Selesaikan transaksi, lalu klik tombol konfirmasi di bawah.</li>
+                  </ol>
                 </div>
-              )}
+
+                {confirmed ? (
+                  <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center gap-3">
+                    <CheckCircle2 className="h-5 w-5 shrink-0 text-emerald-400" />
+                    <div>
+                      <p className="font-semibold">Konfirmasi Pembayaran Diterima!</p>
+                      <p className="text-slate-400 mt-0.5">
+                        Admin sedang mencocokkan mutasi rekening. Halaman ini akan otomatis diperbarui begitu saldo disetujui.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    <button
+                      onClick={handleConfirmPayment}
+                      disabled={confirmLoading}
+                      className="w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-white font-semibold text-sm flex items-center justify-center gap-2 transition shadow-lg shadow-emerald-500/20 disabled:opacity-50"
+                    >
+                      {confirmLoading ? (
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                      ) : (
+                        <>
+                          <CheckCircle2 className="h-4 w-4" />
+                          <span>Saya Sudah Bayar (Konfirmasi)</span>
+                        </>
+                      )}
+                    </button>
+
+                    <a
+                      href={getWhatsAppUrl()}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-emerald-400 font-medium text-xs flex items-center justify-center gap-2 transition border border-slate-700"
+                    >
+                      <MessageCircle className="h-4 w-4" />
+                      <span>Konfirmasi Cepat via WhatsApp</span>
+                    </a>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          )}
         </div>
       ) : (
         /* NOMINAL SELECTOR VIEW */

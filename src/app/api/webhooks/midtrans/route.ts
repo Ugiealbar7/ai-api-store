@@ -13,8 +13,9 @@ export async function POST(req: Request) {
     const transactionStatus = notification.transaction_status;
     const fraudStatus = notification.fraud_status;
 
-    // Verifikasi Signature Key Midtrans (SHA512(order_id + status_code + gross_amount + ServerKey))
     const serverKey = process.env.MIDTRANS_SERVER_KEY || "";
+
+    // Verifikasi Signature Key Midtrans: SHA512(order_id + status_code + gross_amount + ServerKey)
     if (serverKey && !serverKey.includes("demo-key")) {
       const hash = crypto
         .createHash("sha512")
@@ -22,8 +23,12 @@ export async function POST(req: Request) {
         .digest("hex");
 
       if (hash !== signatureKey) {
+        console.warn(`[Midtrans Webhook] Invalid signature key for order: ${orderId}`);
         return NextResponse.json({ error: "Invalid signature key" }, { status: 403 });
       }
+    } else if (process.env.NODE_ENV === "production" && (!serverKey || serverKey.includes("demo-key"))) {
+      console.warn("[Midtrans Webhook] MIDTRANS_SERVER_KEY belum diatur di production.");
+      return NextResponse.json({ error: "Gateway server key not configured" }, { status: 500 });
     }
 
     const transaction = await prisma.transaction.findUnique({
@@ -79,7 +84,7 @@ export async function POST(req: Request) {
         }),
       ]);
 
-      console.log(`✅ Saldo user ${transaction.user.email} bertambah Rp ${transaction.amount}`);
+      console.log(`[Midtrans Webhook] Saldo user ${transaction.user.email} bertambah Rp ${transaction.amount}`);
     }
 
     return NextResponse.json({ status: "ok" });
@@ -87,35 +92,4 @@ export async function POST(req: Request) {
     console.error("Midtrans Webhook Error:", error);
     return NextResponse.json({ error: "Webhook processing error" }, { status: 500 });
   }
-}
-
-// Endpoint simulasi instan untuk testing saat belum pasang server key asli
-export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  const orderId = searchParams.get("order_id");
-
-  if (!orderId) {
-    return NextResponse.json({ error: "order_id required" }, { status: 400 });
-  }
-
-  const transaction = await prisma.transaction.findUnique({
-    where: { orderId },
-  });
-
-  if (!transaction || transaction.status === "PAID") {
-    return NextResponse.json({ message: "Transaksi tidak ditemukan atau sudah dibayar." });
-  }
-
-  await prisma.$transaction([
-    prisma.transaction.update({
-      where: { id: transaction.id },
-      data: { status: "PAID", paidAt: new Date(), paymentType: "qris_simulated" },
-    }),
-    prisma.user.update({
-      where: { id: transaction.userId },
-      data: { balance: { increment: transaction.amount } },
-    }),
-  ]);
-
-  return NextResponse.json({ success: true, message: `Saldo Rp ${transaction.amount} berhasil ditambahkan!` });
 }
