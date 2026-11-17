@@ -1,0 +1,70 @@
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String
+  password  String
+  role      String   @default("USER") // USER, ADMIN
+  balance   Float    @default(10000)  // Saldo awal IDR (Rp 10.000 gratis untuk coba API!)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  apiKeys      ApiKey[]
+  transactions Transaction[]
+  usageLogs    UsageLog[]
+}
+
+model ApiKey {
+  id         String    @id @default(cuid())
+  userId     String
+  key        String    @unique // sk-live-...
+  name       String    @default("Default Key")
+  isActive   Boolean   @default(true)
+  totalSpent Float     @default(0) // Total rupiah terpakai oleh key ini
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime?
+
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usageLogs UsageLog[]
+}
+
+model Transaction {
+  id          String    @id @default(cuid())
+  userId      String
+  orderId     String    @unique
+  amount      Float     // Nominal IDR
+  status      String    @default("PENDING") // PENDING, PAID, FAILED, EXPIRED
+  paymentType String?   // qris, bank_transfer, etc.
+  paymentUrl  String?
+  qrString    String?
+  snapToken   String?
+  createdAt   DateTime  @default(now())
+  paidAt      DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model UsageLog {
+  id               String   @id @default(cuid())
+  userId           String
+  apiKeyId         String
+  model            String
+  promptTokens     Int
+  completionTokens Int
+  totalTokens      Int
+  costIdr          Float    // Biaya terpotong dalam Rupiah
+  status           String   @default("SUCCESS")
+  createdAt        DateTime @default(now())
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  apiKey ApiKey @relation(fields: [apiKeyId], references: [id], onDelete: Cascade)
+}
