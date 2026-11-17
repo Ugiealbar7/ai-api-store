@@ -12,6 +12,7 @@ import {
   Activity,
   LogOut,
   User as UserIcon,
+  ShieldCheck,
 } from "lucide-react";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -38,6 +39,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { label: "Top Up Saldo", href: "/dashboard/topup", icon: Wallet },
     { label: "Dokumentasi", href: "/dashboard/docs", icon: BookOpen },
     { label: "Riwayat Penggunaan", href: "/dashboard/usage", icon: Activity },
+    ...(user?.role === "ADMIN"
+      ? [{ label: "Admin Panel", href: "/dashboard/admin", icon: ShieldCheck }]
+      : []),
   ];
 
   const handleLogout = async () => {
