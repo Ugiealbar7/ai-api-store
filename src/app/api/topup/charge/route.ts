@@ -31,7 +31,7 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Minimal top up adalah Rp 10.000." }, { status: 400 });
     }
 
-    // Kode unik 3 digit acak (100 - 999) agar mudah dicocokkan saat mutasi DANA masuk
+    // Kode unik 3 digit acak (100 - 999) agar mudah dicocokkan saat mutasi rekening/merchant masuk
     const uniqueCode = Math.floor(100 + Math.random() * 899);
     const totalAmount = nominal + uniqueCode;
 
@@ -44,7 +44,7 @@ export async function POST(req: Request) {
         orderId,
         amount: totalAmount,
         status: "PENDING",
-        paymentType: "qris_dana",
+        paymentType: "qris_merchant",
         qrString: "/qris.jpg",
       },
     });

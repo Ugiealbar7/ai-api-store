@@ -167,11 +167,11 @@ export default function TopUpPage() {
         <h1 className="text-2xl font-bold text-white flex items-center gap-2">
           <span>Top Up Saldo API</span>
           <span className="text-xs px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 font-medium">
-            QRIS Nasional All-Payment
+            QRIS Bisnis Nasional (Semua Bank & e-Wallet)
           </span>
         </h1>
         <p className="text-sm text-slate-400 mt-1">
-          Scan QRIS menggunakan BCA, Mandiri, BRI, BNI, GoPay, OVO, ShopeePay, atau DANA. Saldo masuk otomatis setelah verifikasi.
+          Scan QRIS bisnis resmi menggunakan aplikasi m-Banking apa pun (BCA, Mandiri, BRI, BNI, Bank Jago, SeaBank) atau e-Wallet (GoPay, OVO, ShopeePay, DANA, LinkAja). Saldo masuk otomatis setelah verifikasi.
         </p>
       </div>
 
@@ -284,9 +284,9 @@ export default function TopUpPage() {
                 <div className="space-y-2.5 text-xs text-slate-300">
                   <h4 className="font-semibold text-white text-sm">Langkah Pembayaran:</h4>
                   <ol className="space-y-2 list-decimal list-inside text-slate-400">
-                    <li>Buka <b>BCA, Mandiri, BRI, BNI, GoPay, OVO, ShopeePay, atau DANA</b>.</li>
-                    <li>Pilih menu <b>Scan QRIS</b> dan arahkan ke barcode di samping.</li>
-                    <li>Pastikan nominal transfer persis <b>Rp {activeInvoice.totalAmount.toLocaleString("id-ID")}</b>.</li>
+                    <li>Buka aplikasi <b>m-Banking apa pun</b> (BCA, Mandiri, BRI, BNI, Jago, SeaBank) atau <b>e-Wallet</b> (GoPay, OVO, ShopeePay, DANA, LinkAja).</li>
+                    <li>Pilih menu <b>Scan QRIS</b> dan arahkan kamera ke barcode di samping.</li>
+                    <li>Masukkan nominal transfer persis <b>Rp {activeInvoice.totalAmount.toLocaleString("id-ID")}</b>.</li>
                     <li>Selesaikan transaksi, lalu klik tombol konfirmasi di bawah.</li>
                   </ol>
                 </div>
@@ -408,22 +408,22 @@ export default function TopUpPage() {
               <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-4">
                 <ShieldCheck className="h-5 w-5" />
               </div>
-              <h3 className="text-sm font-bold text-white mb-2">Didukung QRIS Nasional</h3>
+              <h3 className="text-sm font-bold text-white mb-2">QRIS Bisnis Merchant Resmi</h3>
               <p className="text-xs text-slate-400 leading-relaxed mb-4">
-                Satu barcode resmi untuk seluruh bank dan aplikasi pembayaran di Indonesia:
+                Satu barcode QRIS standar Bank Indonesia & ASPI untuk seluruh aplikasi pembayaran:
               </p>
               <ul className="text-xs text-slate-300 space-y-2 mb-4">
                 <li className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  <span>BCA, Mandiri Livin, BRImo, BNI</span>
+                  <span>BCA, Mandiri Livin, BRImo, BNI, BTN</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  <span>GoPay, OVO, ShopeePay, DANA</span>
+                  <span>GoPay, OVO, ShopeePay, DANA, LinkAja</span>
                 </li>
                 <li className="flex items-center gap-2">
                   <div className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  <span>Bank Jago, SeaBank, Line Bank</span>
+                  <span>Bank Jago, SeaBank, Jenius, Allo Bank</span>
                 </li>
               </ul>
             </div>

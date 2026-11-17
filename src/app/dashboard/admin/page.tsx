@@ -168,7 +168,7 @@ export default function AdminPage() {
             </span>
           </div>
           <p className="text-sm text-slate-400 mt-1">
-            Verifikasi mutasi pembayaran QRIS DANA dan masukkan saldo ke akun pengguna secara instan.
+            Verifikasi mutasi pembayaran QRIS Merchant Bisnis (Semua Bank & e-Wallet) dan masukkan saldo ke akun pengguna secara instan.
           </p>
         </div>
 
