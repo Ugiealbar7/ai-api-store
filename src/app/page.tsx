@@ -21,13 +21,16 @@ import {
   CheckCircle,
   HelpCircle,
   Play,
+  Brain,
+  Rocket,
+  Compass,
 } from "lucide-react";
 
 export default function Home() {
   const models = getModelDisplayPrices();
   const [activeTab, setActiveTab] = useState<"curl" | "python" | "node" | "cursor">("curl");
   const [copiedCode, setCopiedCode] = useState(false);
-  const [selectedCategory, setSelectedCategory] = useState<"all" | "reasoning" | "fast">("all");
+  const [selectedCategory, setSelectedCategory] = useState<"all" | "reasoning" | "coding" | "flagship" | "fast">("all");
   const [tokenMonthlyEstimate, setTokenMonthlyEstimate] = useState<number>(250000); // 250k token / bulan
 
   const appUrl = typeof window !== "undefined" ? window.location.origin : "https://ai-api-store-iota.vercel.app";
@@ -72,7 +75,7 @@ console.log(res.choices[0].message.content);`,
     cursor: `// Di Cursor IDE: Settings -> Models -> OpenAI API Key
 Base URL: ${appUrl}/api/v1
 API Key:  sk-live-xxxxxxxxxxxxxxxx
-Models:   deepseek-reasoner, claude-3-7-sonnet, gpt-4o`,
+Models:   deepseek-reasoner, claude-3-7-sonnet, claude-3-5-sonnet, o3-mini, gpt-4o`,
   };
 
   const handleCopyCode = () => {
@@ -81,20 +84,14 @@ Models:   deepseek-reasoner, claude-3-7-sonnet, gpt-4o`,
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  // Hitung estimasi pengeluaran per bulan
-  // Rata-rata biaya campuran: Rp 12 per 1k token
+  // Estimasi biaya per bulan
   const estimatedCostIdr = Math.round((tokenMonthlyEstimate / 1000) * 12);
   const chatGptPlusCostIdr = 350000;
   const savingsPercent = Math.max(0, Math.round(((chatGptPlusCostIdr - estimatedCostIdr) / chatGptPlusCostIdr) * 100));
 
   const filteredModels = models.filter((m) => {
-    if (selectedCategory === "reasoning") {
-      return ["deepseek-reasoner", "claude-3-7-sonnet", "gpt-4o"].includes(m.id);
-    }
-    if (selectedCategory === "fast") {
-      return ["gpt-4o-mini", "deepseek-chat", "claude-3-5-haiku", "gemini-2.5-flash"].includes(m.id);
-    }
-    return true;
+    if (selectedCategory === "all") return true;
+    return m.category === selectedCategory;
   });
 
   return (
@@ -114,7 +111,7 @@ Models:   deepseek-reasoner, claude-3-7-sonnet, gpt-4o`,
               <span className="flex h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>Universal OpenAI v1 Standard Gateway</span>
               <span className="text-slate-500">•</span>
-              <span className="text-slate-300">Bayar via QRIS</span>
+              <span className="text-slate-300">14+ Model AI Terbaik</span>
             </div>
 
             {/* Main Headline */}
@@ -127,8 +124,8 @@ Models:   deepseek-reasoner, claude-3-7-sonnet, gpt-4o`,
 
             {/* Sub-headline */}
             <p className="text-base sm:text-lg text-slate-400 leading-relaxed mb-10 max-w-2xl mx-auto">
-              Satu API key untuk <strong>GPT-4o, Claude 3.7 Sonnet, DeepSeek R1, dan Gemini</strong>. 
-              Kompatibel dengan Cursor, Cline, NextChat, dan script coding Anda. Top-up saldo mulai Rp 10.000 dengan QRIS.
+              Satu API key untuk <strong>Claude 3.7 Sonnet, DeepSeek R1, OpenAI o3-mini & GPT-4o, Gemini 2.5 Pro, Qwen, hingga Llama 3.3</strong>.
+              Gunakan langsung di Cursor IDE, Cline, NextChat, atau proyek koding Anda. Bayar via QRIS mulai Rp 10.000.
             </p>
 
             {/* CTA Buttons */}
@@ -141,10 +138,10 @@ Models:   deepseek-reasoner, claude-3-7-sonnet, gpt-4o`,
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href="#pricing"
+                href="#models"
                 className="w-full sm:w-auto bg-slate-900/90 hover:bg-slate-800 text-slate-300 hover:text-white font-medium px-6 py-3 rounded-xl border border-white/[0.08] transition text-sm"
               >
-                Kalkulator Tarif
+                Lihat 14+ Model AI
               </Link>
             </div>
           </div>
@@ -246,48 +243,37 @@ Models:   deepseek-reasoner, claude-3-7-sonnet, gpt-4o`,
           <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-12">
             <div>
               <span className="text-xs font-mono uppercase tracking-wider text-indigo-400 mb-2 block">
-                KATALOG MODEL AI
+                KATALOG LENGKAP 14+ MODEL AI
               </span>
               <h2 className="text-3xl sm:text-4xl font-bold text-white tracking-tight">
-                Model Terkuat dari OpenAI, Anthropic, DeepSeek, & Google
+                Pilih Model AI Sesuai Kebutuhan & Budget Anda
               </h2>
               <p className="text-sm text-slate-400 mt-2 max-w-xl">
-                Cukup tentukan nama model di body request Anda. Biaya dihitung per-token dengan kurs transparan.
+                Cukup tentukan ID model di parameter request Anda. Saldo Rupiah Anda terpotong otomatis per token secara transparan.
               </p>
             </div>
 
             {/* Filter buttons */}
-            <div className="flex items-center gap-1.5 p-1 bg-slate-900 border border-white/[0.08] rounded-xl self-start md:self-auto">
-              <button
-                onClick={() => setSelectedCategory("all")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                  selectedCategory === "all"
-                    ? "bg-indigo-600 text-white"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                Semua ({models.length})
-              </button>
-              <button
-                onClick={() => setSelectedCategory("reasoning")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                  selectedCategory === "reasoning"
-                    ? "bg-indigo-600 text-white"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                Penalaran & Koding
-              </button>
-              <button
-                onClick={() => setSelectedCategory("fast")}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
-                  selectedCategory === "fast"
-                    ? "bg-indigo-600 text-white"
-                    : "text-slate-400 hover:text-white"
-                }`}
-              >
-                Super Cepat & Hemat
-              </button>
+            <div className="flex flex-wrap items-center gap-1.5 p-1 bg-slate-900 border border-white/[0.08] rounded-xl self-start md:self-auto">
+              {[
+                { key: "all", label: `Semua (${models.length})` },
+                { key: "reasoning", label: "Penalaran (o3/R1)" },
+                { key: "coding", label: "Koding & Cursor" },
+                { key: "flagship", label: "Flagship Umum" },
+                { key: "fast", label: "Kilat & Hemat" },
+              ].map((tab) => (
+                <button
+                  key={tab.key}
+                  onClick={() => setSelectedCategory(tab.key as any)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition ${
+                    selectedCategory === tab.key
+                      ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/30"
+                      : "text-slate-400 hover:text-white"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
             </div>
           </div>
 
@@ -298,14 +284,25 @@ Models:   deepseek-reasoner, claude-3-7-sonnet, gpt-4o`,
                 className="glass-panel glass-panel-hover rounded-2xl p-6 flex flex-col justify-between"
               >
                 <div>
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="flex items-center justify-between gap-2 mb-3">
                     <span className="text-[11px] font-mono uppercase tracking-wider text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-2 py-0.5 rounded">
                       {m.provider}
                     </span>
-                    <span className="text-xs font-mono text-slate-500">{m.id}</span>
+                    <span className="text-[10px] font-mono text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-1.5 py-0.5 rounded">
+                      {m.contextWindow}
+                    </span>
                   </div>
 
-                  <h3 className="text-lg font-bold text-white mb-2">{m.name}</h3>
+                  {m.badge && (
+                    <div className="mb-2">
+                      <span className="text-[10px] font-mono font-bold tracking-wider text-amber-300 bg-amber-500/10 border border-amber-500/20 px-2 py-0.5 rounded-full">
+                        {m.badge}
+                      </span>
+                    </div>
+                  )}
+
+                  <h3 className="text-lg font-bold text-white mb-1.5">{m.name}</h3>
+                  <div className="text-xs font-mono text-indigo-300 mb-3">{m.id}</div>
                   <p className="text-xs text-slate-400 leading-relaxed mb-6">
                     {m.description}
                   </p>
