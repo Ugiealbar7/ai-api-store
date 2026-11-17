@@ -143,7 +143,7 @@ Custom Models:   gpt-4o, gpt-4o-mini, claude-3-7-sonnet, deepseek-reasoner, deep
       </div>
 
       {/* AVAILABLE MODELS TABLE IN DOCS */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+      <div className="glass-panel rounded-2xl p-6">
         <h2 className="text-base font-bold text-white mb-2">Model AI yang Tersedia & Tarif</h2>
         <p className="text-xs text-slate-400 mb-4">
           Gunakan ID model di bawah ini pada parameter <code className="text-indigo-300">model</code> di request Anda.
@@ -179,7 +179,7 @@ Custom Models:   gpt-4o, gpt-4o-mini, claude-3-7-sonnet, deepseek-reasoner, deep
       <div className="space-y-6">
         <h2 className="text-base font-bold text-white">Contoh Kode Integrasi</h2>
         {codeSnippets.map((item, idx) => (
-          <div key={idx} className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden shadow-sm">
+          <div key={idx} className="glass-panel rounded-2xl overflow-hidden shadow-sm">
             <div className="px-5 py-3.5 bg-slate-950/60 border-b border-slate-800 flex items-center justify-between">
               <div>
                 <h3 className="text-sm font-semibold text-white">{item.title}</h3>

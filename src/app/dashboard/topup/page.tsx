@@ -336,7 +336,7 @@ export default function TopUpPage() {
       ) : (
         /* NOMINAL SELECTOR VIEW */
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div className="md:col-span-2 bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+          <div className="md:col-span-2 glass-panel rounded-2xl p-6">
             <h2 className="text-base font-semibold text-white mb-4">Pilih Nominal Top Up</h2>
 
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
@@ -403,7 +403,7 @@ export default function TopUpPage() {
             </button>
           </div>
 
-          <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6 flex flex-col justify-between">
+          <div className="glass-panel rounded-2xl p-6 flex flex-col justify-between">
             <div>
               <div className="h-10 w-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center mb-4">
                 <ShieldCheck className="h-5 w-5" />
@@ -436,7 +436,7 @@ export default function TopUpPage() {
       )}
 
       {/* RECENT TOPUP TRANSACTIONS TABLE */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+      <div className="glass-panel rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-sm font-bold text-white flex items-center gap-2">
             <Clock className="h-4 w-4 text-slate-400" />

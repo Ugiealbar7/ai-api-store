@@ -181,9 +181,27 @@ export default function AdminPage() {
         </button>
       </div>
 
+      {/* ALERT BANNER IF PENDING TRANSACTIONS EXIST */}
+      {(data?.stats.pendingCount ?? 0) > 0 && (
+        <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 flex items-center justify-between gap-3 shadow-lg shadow-amber-950/20">
+          <div className="flex items-center gap-3">
+            <span className="flex h-3 w-3 rounded-full bg-amber-400 animate-ping shrink-0" />
+            <p className="text-xs sm:text-sm font-medium">
+              Perhatian: Ada <strong className="text-white underline">{data?.stats.pendingCount} transaksi</strong> menunggu konfirmasi dan approval saldo Anda!
+            </p>
+          </div>
+          <button
+            onClick={() => setStatusFilter("PENDING")}
+            className="px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 text-xs font-bold transition shrink-0"
+          >
+            Lihat Transaksi
+          </button>
+        </div>
+      )}
+
       {/* STATS OVERVIEW */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex items-center gap-4">
+        <div className="glass-panel rounded-2xl p-5 flex items-center gap-4">
           <div className="h-12 w-12 rounded-xl bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center shrink-0">
             <Users className="h-6 w-6" />
           </div>
@@ -193,7 +211,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex items-center gap-4">
+        <div className="glass-panel rounded-2xl p-5 flex items-center gap-4">
           <div className="h-12 w-12 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center shrink-0">
             <DollarSign className="h-6 w-6" />
           </div>
@@ -205,7 +223,7 @@ export default function AdminPage() {
           </div>
         </div>
 
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 flex items-center gap-4">
+        <div className="glass-panel rounded-2xl p-5 flex items-center gap-4">
           <div className="h-12 w-12 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center shrink-0">
             <Clock className="h-6 w-6" />
           </div>
@@ -217,7 +235,7 @@ export default function AdminPage() {
       </div>
 
       {/* FILTER TABS & SEARCH */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+      <div className="glass-panel rounded-2xl p-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-2 overflow-x-auto w-full sm:w-auto pb-2 sm:pb-0">
             {[

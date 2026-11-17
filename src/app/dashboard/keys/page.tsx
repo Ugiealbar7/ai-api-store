@@ -106,7 +106,7 @@ export default function KeysPage() {
       </div>
 
       {/* CREATE NEW KEY CARD */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+      <div className="glass-panel rounded-2xl p-6">
         <h2 className="text-base font-semibold text-white mb-2">Buat API Key Baru</h2>
         <form onSubmit={handleCreate} className="flex flex-col sm:flex-row gap-3">
           <input
@@ -147,8 +147,8 @@ export default function KeysPage() {
       </div>
 
       {/* KEY TABLE */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-2xl overflow-hidden">
-        <div className="p-4 border-b border-slate-800 flex items-center justify-between">
+      <div className="glass-panel rounded-2xl overflow-hidden">
+        <div className="p-4 border-b border-white/[0.08] flex items-center justify-between">
           <span className="text-sm font-semibold text-white">Daftar API Key ({keys.length})</span>
         </div>
 

@@ -102,7 +102,7 @@ export default function DashboardOverviewPage() {
 
       {/* STATS CARDS */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
+        <div className="glass-panel rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs text-slate-400 font-medium">Saldo Tersedia</span>
             <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
@@ -121,7 +121,7 @@ export default function DashboardOverviewPage() {
           </Link>
         </div>
 
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
+        <div className="glass-panel rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs text-slate-400 font-medium">API Key Aktif</span>
             <div className="p-2 rounded-xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20">
@@ -140,7 +140,7 @@ export default function DashboardOverviewPage() {
           </Link>
         </div>
 
-        <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5">
+        <div className="glass-panel rounded-2xl p-5">
           <div className="flex items-center justify-between mb-3">
             <span className="text-xs text-slate-400 font-medium">Endpoint API</span>
             <div className="p-2 rounded-xl bg-purple-500/10 text-purple-400 border border-purple-500/20">
@@ -161,7 +161,7 @@ export default function DashboardOverviewPage() {
       </div>
 
       {/* QUICK API KEY LIST */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+      <div className="glass-panel rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
           <h2 className="text-base font-bold text-white">API Key Anda</h2>
           <Link href="/dashboard/keys" className="text-xs text-indigo-400 hover:text-indigo-300">
@@ -227,7 +227,7 @@ export default function DashboardOverviewPage() {
       </div>
 
       {/* LIVE QUICK TEST PLAYGROUND */}
-      <div className="bg-slate-900/60 border border-slate-800 rounded-2xl p-6">
+      <div className="glass-panel rounded-2xl p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
           <div>
             <h2 className="text-base font-bold text-white flex items-center gap-2">
