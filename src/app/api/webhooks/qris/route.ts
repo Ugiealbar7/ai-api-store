@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { calculateTopupBonus } from "@/lib/brand";
+import { settlePaidTransaction } from "@/lib/settle-transaction";
 import { prisma } from "@/lib/db";
 import crypto from "crypto";
 
@@ -144,24 +144,7 @@ export async function POST(req: Request) {
     }
 
     const tx = matches[0];
-    const { bonusAmount, bonusPercent } = calculateTopupBonus(tx.amount);
-    const totalCredited = tx.amount + bonusAmount;
-
-    const [, updatedUser] = await prisma.$transaction([
-      prisma.transaction.update({
-        where: { id: tx.id },
-        data: {
-          status: "PAID",
-          paidAt: new Date(),
-        },
-      }),
-      prisma.user.update({
-        where: { id: tx.userId },
-        data: {
-          balance: { increment: totalCredited },
-        },
-      }),
-    ]);
+    const settled = await settlePaidTransaction(tx.id);
 
     return NextResponse.json({
       success: true,
@@ -169,10 +152,12 @@ export async function POST(req: Request) {
       orderId: tx.orderId,
       userEmail: tx.user.email,
       amountPaid: tx.amount,
-      bonusPercent,
-      bonusAmount,
-      totalCredited,
-      newBalance: updatedUser.balance,
+      bonusPercent: settled.bonusPercent,
+      bonusAmount: settled.bonusAmount,
+      buyerWelcomeBonus: settled.buyerWelcomeBonus,
+      referrerCommission: settled.referrerCommission,
+      totalCredited: settled.totalCreditedToBuyer,
+      newBalance: settled.newBuyerBalance,
     });
   } catch (error: any) {
     console.error("[QRIS Webhook Error]:", error);

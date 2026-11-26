@@ -14,7 +14,10 @@ import {
   Zap,
   Clock,
   AlertTriangle,
+  Users,
+  Share2,
 } from "lucide-react";
+import { BRAND } from "@/lib/brand";
 import { AVAILABLE_MODELS } from "@/lib/pricing";
 
 interface LiveModelOption {
@@ -117,6 +120,9 @@ export default function DashboardOverviewPage() {
 
   const activeKeysCount = keys.filter((k) => k.isActive).length;
   const isLowBalance = typeof user?.balance === "number" && user.balance < 5000;
+  const originUrl = typeof window !== "undefined" ? window.location.origin : BRAND.siteUrl;
+  const referralUrl = user?.referralCode ? `${originUrl}/register?ref=${user.referralCode}` : "";
+  const shareText = `Pakai 330+ model AI terbaru (Gemini 4 Hydrogen, GPT-6.2 Astra, Claude Opus 5.5) di Cursor IDE, OpenClaw, atau Python tanpa kartu kredit — bayar QRIS mulai Rp 10.000! Daftar lewat link ini dapat ekstra bonus +3%: ${referralUrl}`;
 
   return (
     <div className="space-y-8">
@@ -204,6 +210,67 @@ export default function DashboardOverviewPage() {
           </Link>
         </div>
       </div>
+
+      {/* VIRAL REFERRAL CARD */}
+      {user?.referralCode && (
+        <div className="surface-card rounded-xl p-6 border-emerald-500/25 flex flex-col lg:flex-row lg:items-center justify-between gap-5">
+          <div className="space-y-2 max-w-xl">
+            <div className="inline-flex items-center gap-2 text-[11px] font-mono uppercase tracking-wider text-emerald-400">
+              <Users className="h-3.5 w-3.5" />
+              <span>AJAK TEMAN = SALDO GRATIS 5%</span>
+            </div>
+            <h2 className="text-base font-bold text-zinc-50">
+              Bagikan Link Undangan & Dapatkan Komisi Saldo Otomatis
+            </h2>
+            <p className="text-xs text-zinc-400 leading-relaxed">
+              Setiap teman yang mendaftar lewat link Anda dan melakukan Top Up QRIS pertamanya akan mendapatkan ekstra <strong>+3% saldo</strong>, dan Anda otomatis menerima komisi <strong>+5%</strong> ke saldo Anda!
+            </p>
+            <div className="flex flex-wrap gap-4 pt-1 text-xs font-mono">
+              <span className="text-zinc-300">
+                Teman Diundang: <strong className="text-zinc-50">{user.invitedCount ?? 0}</strong>
+              </span>
+              <span className="text-emerald-400">
+                Total Komisi: <strong>Rp {(user.referralEarnings ?? 0).toLocaleString("id-ID")}</strong>
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-2.5 lg:w-80 shrink-0">
+            <div className="flex items-center gap-2 bg-[#0c0c0f] border border-zinc-800 rounded-lg p-2">
+              <code className="text-[11px] font-mono text-emerald-400 truncate flex-1">
+                {referralUrl}
+              </code>
+              <button
+                type="button"
+                onClick={() => handleCopy(referralUrl)}
+                className="px-2.5 py-1 rounded bg-zinc-50 hover:bg-zinc-200 text-zinc-950 text-[11px] font-semibold shrink-0"
+              >
+                {copiedKey === referralUrl ? "Tersalin!" : "Salin"}
+              </button>
+            </div>
+            <div className="grid grid-cols-2 gap-2">
+              <a
+                href={`https://wa.me/?text=${encodeURIComponent(shareText)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-2 px-3 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 border border-emerald-500/30 text-emerald-300 text-xs font-medium flex items-center justify-center gap-1.5 transition"
+              >
+                <Share2 className="h-3.5 w-3.5" />
+                <span>Bagikan WA</span>
+              </a>
+              <a
+                href={`https://t.me/share/url?url=${encodeURIComponent(referralUrl)}&text=${encodeURIComponent(shareText)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="py-2 px-3 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-200 text-xs font-medium flex items-center justify-center gap-1.5 transition"
+              >
+                <Share2 className="h-3.5 w-3.5" />
+                <span>Bagikan Telegram</span>
+              </a>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* QUICK API KEY LIST */}
       <div className="surface-card rounded-xl p-6">

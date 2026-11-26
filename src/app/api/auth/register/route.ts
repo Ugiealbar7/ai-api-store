@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/db";
 import { hashPassword, signToken } from "@/lib/auth";
 import { DISPOSABLE_EMAIL_DOMAINS, STARTER_TRIAL_BALANCE_IDR } from "@/lib/brand";
+import { generateReferralCode } from "@/lib/settle-transaction";
 import crypto from "crypto";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -21,9 +22,10 @@ function getClientIp(req: Request): string | null {
 
 export async function POST(req: Request) {
   try {
-    const { name, email, password } = await req.json();
+    const { name, email, password, referralCode } = await req.json();
     const cleanName = typeof name === "string" ? name.trim() : "";
     const cleanEmail = typeof email === "string" ? email.trim().toLowerCase() : "";
+    const cleanRef = typeof referralCode === "string" ? referralCode.trim().toUpperCase() : "";
 
     if (!cleanName || !cleanEmail || !password) {
       return NextResponse.json({ error: "Nama, email, dan password wajib diisi." }, { status: 400 });
@@ -52,7 +54,17 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email sudah terdaftar. Silakan masuk." }, { status: 400 });
     }
 
-    // Proteksi batas bonus saldo uji coba per IP dalam 7 hari terakhir (maks. 2 akun berbonus per IP)
+    let referredById: string | null = null;
+    if (cleanRef) {
+      const referrer = await prisma.user.findFirst({
+        where: { referralCode: { equals: cleanRef, mode: "insensitive" } },
+        select: { id: true },
+      });
+      if (referrer) {
+        referredById = referrer.id;
+      }
+    }
+
     const clientIp = getClientIp(req);
     let initialBalance = STARTER_TRIAL_BALANCE_IDR;
     let trialGranted = true;
@@ -72,6 +84,7 @@ export async function POST(req: Request) {
     }
 
     const hashedPassword = await hashPassword(password);
+    const ownReferralCode = generateReferralCode();
 
     const user = await prisma.user.create({
       data: {
@@ -80,6 +93,8 @@ export async function POST(req: Request) {
         password: hashedPassword,
         balance: initialBalance,
         signupIp: clientIp,
+        referralCode: ownReferralCode,
+        referredById,
         apiKeys: {
           create: {
             name: "Default Key",
@@ -98,8 +113,15 @@ export async function POST(req: Request) {
     const response = NextResponse.json({
       success: true,
       trialGranted,
+      referred: Boolean(referredById),
       message,
-      user: { id: user.id, name: user.name, email: user.email, balance: user.balance },
+      user: {
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        balance: user.balance,
+        referralCode: user.referralCode,
+      },
     });
 
     response.cookies.set("auth_token", token, {

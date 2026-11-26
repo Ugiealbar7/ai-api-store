@@ -329,6 +329,31 @@ console.log(res.choices[0].message.content);`,
               </Link>
             </div>
 
+            {/* VALUE TRANSLATOR: RP 25.000 DAPAT APA SAJA */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-10">
+              <div className="surface-card rounded-xl p-5">
+                <span className="text-[11px] font-mono text-emerald-400 block mb-1">ESTIMASI DENGAN RP 25.000</span>
+                <div className="text-lg font-bold text-zinc-50">~1.500+ ChatGPT / GPT-6 Luna</div>
+                <p className="text-xs text-zinc-400 mt-1">
+                  Cocok untuk tanya-jawab harian, bot WhatsApp/Telegram, dan riset cepat.
+                </p>
+              </div>
+              <div className="surface-card rounded-xl p-5">
+                <span className="text-[11px] font-mono text-emerald-400 block mb-1">ESTIMASI DENGAN RP 25.000</span>
+                <div className="text-lg font-bold text-zinc-50">~500+ Sesi Coding DeepSeek V4.1</div>
+                <p className="text-xs text-zinc-400 mt-1">
+                  Hemat berkali-kali lipat dibanding langganan AI tetap Rp 350.000/bulan.
+                </p>
+              </div>
+              <div className="surface-card rounded-xl p-5 border-emerald-500/30">
+                <span className="text-[11px] font-mono text-emerald-400 block mb-1">PROGRAM AJAK TEMAN</span>
+                <div className="text-lg font-bold text-zinc-50">Komisi Saldo 5% + Bonus 3%</div>
+                <p className="text-xs text-zinc-400 mt-1">
+                  Bagikan link referral Anda — dapat bonus saldo otomatis setiap teman Anda top up pertama.
+                </p>
+              </div>
+            </div>
+
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
               {TOPUP_PACKAGES.map((pkg) => {
                 const bonusAmount = Math.round((pkg.amount * pkg.bonusPercent) / 100);
@@ -744,6 +769,22 @@ console.log(res.choices[0].message.content);`,
       </main>
 
       <Footer />
+
+      {/* STICKY MOBILE CONVERSION BAR */}
+      {!isLoggedIn && (
+        <div className="md:hidden fixed bottom-0 inset-x-0 z-40 bg-[#09090b]/95 backdrop-blur border-t border-zinc-800 px-4 py-3 flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <div className="text-xs font-bold text-zinc-50 truncate">Gratis Saldo Uji Rp 2.500</div>
+            <div className="text-[11px] text-zinc-400 truncate">337+ Model AI · QRIS Rp 10rb</div>
+          </div>
+          <Link
+            href="/register"
+            className="px-4 py-2 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-bold text-xs shrink-0 transition"
+          >
+            Daftar 30 Detik
+          </Link>
+        </div>
+      )}
     </div>
   );
 }

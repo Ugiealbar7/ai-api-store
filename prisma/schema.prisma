@@ -18,6 +18,9 @@ model User {
   signupIp         String?   // IP pendaftaran untuk mencegah penyalahgunaan saldo uji coba
   resetTokenHash   String?   // SHA-256 hash token reset password
   resetTokenExpiry DateTime? // Masa berlaku token reset password
+  referralCode     String?   @unique // Kode undangan unik user (mis. AKS-XXXXXX)
+  referredById     String?   // ID user pengajak
+  referralEarnings Float     @default(0) // Total bonus referral diterima (IDR)
   createdAt        DateTime  @default(now())
   updatedAt DateTime @updatedAt
 
@@ -50,8 +53,9 @@ model Transaction {
   paymentType String?   // qris, bank_transfer, etc.
   paymentUrl  String?
   qrString    String?
-  snapToken   String?
-  createdAt   DateTime  @default(now())
+  snapToken         String?
+  referralBonusPaid Boolean   @default(false)
+  createdAt         DateTime  @default(now())
   paidAt      DateTime?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)

@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { calculateTopupBonus } from "@/lib/brand";
+import { settlePaidTransaction } from "@/lib/settle-transaction";
 import { prisma } from "@/lib/db";
 import crypto from "crypto";
 
@@ -65,31 +65,13 @@ export async function POST(req: Request) {
     }
 
     if (isSuccess) {
-      const { bonusAmount } = calculateTopupBonus(transaction.amount);
-      const totalCredited = transaction.amount + bonusAmount;
-
-      // Tambah saldo user (+ bonus tier jika memenuhi syarat) & tandai transaksi PAID secara atomic
-      await prisma.$transaction([
-        prisma.transaction.update({
-          where: { id: transaction.id },
-          data: {
-            status: "PAID",
-            paidAt: new Date(),
-            paymentType: notification.payment_type || transaction.paymentType,
-          },
-        }),
-        prisma.user.update({
-          where: { id: transaction.userId },
-          data: {
-            balance: {
-              increment: totalCredited,
-            },
-          },
-        }),
-      ]);
+      const settled = await settlePaidTransaction(
+        transaction.id,
+        notification.payment_type || transaction.paymentType || undefined
+      );
 
       console.log(
-        `[Midtrans Webhook] Saldo user ${transaction.user.email} bertambah Rp ${totalCredited}`
+        `[Midtrans Webhook] Saldo user ${transaction.user.email} bertambah Rp ${settled.totalCreditedToBuyer}`
       );
     }
 

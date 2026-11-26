@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
-import { calculateTopupBonus } from "@/lib/brand";
 import { prisma } from "@/lib/db";
+import { settlePaidTransaction } from "@/lib/settle-transaction";
 
 export async function POST(
   req: Request,
@@ -15,43 +15,45 @@ export async function POST(
   const { id } = params;
 
   try {
-    const transaction = await prisma.transaction.findUnique({
+    const existing = await prisma.transaction.findUnique({
       where: { id },
-      include: { user: true },
+      include: { user: { select: { email: true } } },
     });
 
-    if (!transaction) {
+    if (!existing) {
       return NextResponse.json({ error: "Transaksi tidak ditemukan." }, { status: 404 });
     }
 
-    if (transaction.status === "PAID") {
+    if (existing.status === "PAID") {
       return NextResponse.json({ error: "Transaksi ini sudah disetujui sebelumnya." }, { status: 400 });
     }
 
-    const { bonusAmount, bonusPercent } = calculateTopupBonus(transaction.amount);
-    const totalCredited = transaction.amount + bonusAmount;
+    const result = await settlePaidTransaction(id);
 
-    const [updatedTx, updatedUser] = await prisma.$transaction([
-      prisma.transaction.update({
-        where: { id: transaction.id },
-        data: { status: "PAID", paidAt: new Date() },
-      }),
-      prisma.user.update({
-        where: { id: transaction.userId },
-        data: { balance: { increment: totalCredited } },
-      }),
-    ]);
-
+    const extraNotes: string[] = [];
+    if (result.bonusAmount > 0) {
+      extraNotes.push(
+        `bonus tier +${result.bonusPercent}% Rp ${result.bonusAmount.toLocaleString("id-ID")}`
+      );
+    }
+    if (result.buyerWelcomeBonus > 0) {
+      extraNotes.push(
+        `welcome bonus referral +Rp ${result.buyerWelcomeBonus.toLocaleString("id-ID")}`
+      );
+    }
     const bonusText =
-      bonusAmount > 0
-        ? ` (+ bonus ${bonusPercent}% Rp ${bonusAmount.toLocaleString("id-ID")} = total Rp ${totalCredited.toLocaleString("id-ID")})`
+      extraNotes.length > 0
+        ? ` (+ ${extraNotes.join(", ")} = total Rp ${result.totalCreditedToBuyer.toLocaleString("id-ID")})`
         : "";
 
     return NextResponse.json({
       success: true,
-      message: `Berhasil menyetujui transaksi! Saldo Rp ${transaction.amount.toLocaleString("id-ID")}${bonusText} telah ditambahkan ke ${transaction.user.email}.`,
-      transaction: updatedTx,
-      newBalance: updatedUser.balance,
+      message: `Berhasil menyetujui transaksi! Saldo Rp ${existing.amount.toLocaleString(
+        "id-ID"
+      )}${bonusText} telah ditambahkan ke ${existing.user.email}.`,
+      transaction: result.transaction,
+      newBalance: result.newBuyerBalance,
+      referrerCommission: result.referrerCommission,
     });
   } catch (error: any) {
     console.error("Approve transaction error:", error);

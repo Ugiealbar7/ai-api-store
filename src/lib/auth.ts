@@ -48,6 +48,8 @@ export async function getCurrentUser() {
       name: true,
       role: true,
       balance: true,
+      referralCode: true,
+      referralEarnings: true,
       createdAt: true,
     },
   });
