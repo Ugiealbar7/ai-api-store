@@ -1,0 +1,215 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import { ArrowRight, Check, Copy } from "lucide-react";
+import { BRAND } from "@/lib/brand";
+import type { ModelPricing } from "@/lib/pricing";
+
+type DisplayModel = ModelPricing & {
+  displayInputPrice: string;
+  displayOutputPrice: string;
+};
+
+export default function PublicDocsClient({ models }: { models: DisplayModel[] }) {
+  const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
+  const [copiedBaseUrl, setCopiedBaseUrl] = useState(false);
+  const [apiBaseUrl, setApiBaseUrl] = useState(`${BRAND.siteUrl}/api/v1`);
+
+  useEffect(() => {
+    if (typeof window !== "undefined") {
+      setApiBaseUrl(`${window.location.origin}/api/v1`);
+    }
+  }, []);
+
+  const handleCopy = (code: string, index: number) => {
+    navigator.clipboard.writeText(code);
+    setCopiedIndex(index);
+    setTimeout(() => setCopiedIndex(null), 1800);
+  };
+
+  const copyBaseUrl = () => {
+    navigator.clipboard.writeText(apiBaseUrl);
+    setCopiedBaseUrl(true);
+    setTimeout(() => setCopiedBaseUrl(false), 1800);
+  };
+
+  const snippets = [
+    {
+      title: "1. Cursor IDE & VS Code Cline / Roo Code",
+      desc: "Buka Settings → Models → pilih OpenAI Compatible / Override OpenAI Base URL:",
+      code: `Base URL:  ${apiBaseUrl}
+API Key:   sk-live-xxxxxxxxxxxxxxxxxxxx
+Model ID:  claude-3-7-sonnet (atau deepseek-reasoner, gpt-4o)`,
+    },
+    {
+      title: "2. Python (OpenAI SDK Resmi)",
+      desc: "Install paket resmi pip install openai lalu arahkan base_url ke gateway:",
+      code: `from openai import OpenAI
+
+client = OpenAI(
+    base_url="${apiBaseUrl}",
+    api_key="sk-live-xxxxxxxxxxxxxxxxxxxx"
+)
+
+response = client.chat.completions.create(
+    model="deepseek-reasoner",
+    messages=[{"role": "user", "content": "Jelaskan clean architecture dalam 3 poin."}],
+    stream=True
+)
+
+for chunk in response:
+    if chunk.choices and chunk.choices[0].delta.content:
+        print(chunk.choices[0].delta.content, end="")`,
+    },
+    {
+      title: "3. Node.js / TypeScript (OpenAI SDK)",
+      desc: "Cocok untuk Next.js, Express, bot WhatsApp/Telegram, dan backend Node:",
+      code: `import OpenAI from "openai";
+
+const client = new OpenAI({
+  baseURL: "${apiBaseUrl}",
+  apiKey: "sk-live-xxxxxxxxxxxxxxxxxxxx",
+});
+
+const completion = await client.chat.completions.create({
+  model: "gpt-4o-mini",
+  messages: [{ role: "user", content: "Buatkan validasi Zod untuk form register." }],
+});
+
+console.log(completion.choices[0].message.content);`,
+    },
+    {
+      title: "4. n8n AI Agent / Workflow Automation",
+      desc: "Pada node OpenAI Chat Model atau HTTP Request di n8n, gunakan kredensial OpenAI API dengan Base URL kustom:",
+      code: `Credential Type: OpenAI API
+Base URL:        ${apiBaseUrl}
+API Key:         sk-live-xxxxxxxxxxxxxxxxxxxx
+Model:           gemini-2.5-flash (atau deepseek-chat, claude-3-7-sonnet)`,
+    },
+    {
+      title: "5. cURL / Terminal Shell",
+      desc: "Uji cepat endpoint langsung dari terminal atau CI/CD:",
+      code: `curl ${apiBaseUrl}/chat/completions \\
+  -H "Content-Type: application/json" \\
+  -H "Authorization: Bearer sk-live-xxxxxxxxxxxxxxxxxxxx" \\
+  -d '{
+    "model": "deepseek-chat",
+    "messages": [{"role": "user", "content": "Halo!"}]
+  }'`,
+    },
+  ];
+
+  return (
+    <div className="space-y-12">
+      {/* Base URL Strip */}
+      <div className="surface-card rounded-xl p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-emerald-500/30">
+        <div>
+          <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-400 block mb-1">
+            Universal Base URL (OpenAI v1 Compatible)
+          </span>
+          <code className="text-sm sm:text-base font-mono text-emerald-400 font-semibold break-all">
+            {apiBaseUrl}
+          </code>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <button
+            onClick={copyBaseUrl}
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-100 text-xs font-semibold transition"
+          >
+            {copiedBaseUrl ? (
+              <>
+                <Check className="h-3.5 w-3.5 text-emerald-400" />
+                <span>Tersalin</span>
+              </>
+            ) : (
+              <>
+                <Copy className="h-3.5 w-3.5" />
+                <span>Salin Base URL</span>
+              </>
+            )}
+          </button>
+          <Link
+            href="/register"
+            className="flex items-center gap-1.5 px-3.5 py-2 rounded-lg bg-zinc-50 hover:bg-zinc-200 text-zinc-950 text-xs font-semibold transition"
+          >
+            <span>Ambil API Key</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </Link>
+        </div>
+      </div>
+
+      {/* Snippets */}
+      <section className="space-y-5">
+        <h2 className="text-xl sm:text-2xl font-bold text-zinc-50">
+          Panduan Integrasi Berdasarkan Platform
+        </h2>
+
+        <div className="space-y-5">
+          {snippets.map((item, idx) => (
+            <div key={idx} className="surface-card rounded-xl overflow-hidden">
+              <div className="px-5 py-3.5 bg-[#141418] border-b border-zinc-800 flex items-center justify-between gap-4">
+                <div>
+                  <h3 className="text-sm font-bold text-zinc-100">{item.title}</h3>
+                  <p className="text-xs text-zinc-400 mt-0.5">{item.desc}</p>
+                </div>
+                <button
+                  onClick={() => handleCopy(item.code, idx)}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-mono text-zinc-200 transition shrink-0"
+                >
+                  {copiedIndex === idx ? (
+                    <>
+                      <Check className="h-3.5 w-3.5 text-emerald-400" />
+                      <span className="text-emerald-400">Tersalin</span>
+                    </>
+                  ) : (
+                    <>
+                      <Copy className="h-3.5 w-3.5" />
+                      <span>Salin</span>
+                    </>
+                  )}
+                </button>
+              </div>
+              <pre className="p-5 bg-[#0c0c0f] text-xs text-zinc-300 font-mono overflow-x-auto leading-relaxed">
+                <code>{item.code}</code>
+              </pre>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* Endpoints & Models Reference */}
+      <section className="space-y-4">
+        <h2 className="text-xl sm:text-2xl font-bold text-zinc-50">
+          Daftar Parameter Model ID Resmi
+        </h2>
+        <div className="surface-card rounded-xl overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-xs">
+              <thead>
+                <tr className="bg-[#141418] border-b border-zinc-800 text-zinc-400">
+                  <th className="p-3.5">Model ID</th>
+                  <th className="p-3.5">Nama</th>
+                  <th className="p-3.5">Provider</th>
+                  <th className="p-3.5">Input / 1K</th>
+                  <th className="p-3.5">Output / 1K</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800/70">
+                {models.map((m) => (
+                  <tr key={m.id} className="hover:bg-[#15151a]">
+                    <td className="p-3.5 font-mono text-emerald-400 font-semibold">{m.id}</td>
+                    <td className="p-3.5 text-zinc-100 font-medium">{m.name}</td>
+                    <td className="p-3.5 text-zinc-400">{m.provider}</td>
+                    <td className="p-3.5 font-mono text-zinc-300">{m.displayInputPrice.split("/")[0]}</td>
+                    <td className="p-3.5 font-mono text-zinc-300">{m.displayOutputPrice.split("/")[0]}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}

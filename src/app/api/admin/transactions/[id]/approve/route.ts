@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { calculateTopupBonus } from "@/lib/brand";
 import { prisma } from "@/lib/db";
 
 export async function POST(
@@ -27,21 +28,28 @@ export async function POST(
       return NextResponse.json({ error: "Transaksi ini sudah disetujui sebelumnya." }, { status: 400 });
     }
 
-    // Atomic update: Transaction status -> PAID, User balance += amount
+    const { bonusAmount, bonusPercent } = calculateTopupBonus(transaction.amount);
+    const totalCredited = transaction.amount + bonusAmount;
+
     const [updatedTx, updatedUser] = await prisma.$transaction([
       prisma.transaction.update({
         where: { id: transaction.id },
-        data: { status: "PAID" },
+        data: { status: "PAID", paidAt: new Date() },
       }),
       prisma.user.update({
         where: { id: transaction.userId },
-        data: { balance: { increment: transaction.amount } },
+        data: { balance: { increment: totalCredited } },
       }),
     ]);
 
+    const bonusText =
+      bonusAmount > 0
+        ? ` (+ bonus ${bonusPercent}% Rp ${bonusAmount.toLocaleString("id-ID")} = total Rp ${totalCredited.toLocaleString("id-ID")})`
+        : "";
+
     return NextResponse.json({
       success: true,
-      message: `Berhasil menyetujui transaksi! Saldo Rp ${transaction.amount.toLocaleString("id-ID")} telah ditambahkan ke ${transaction.user.email}.`,
+      message: `Berhasil menyetujui transaksi! Saldo Rp ${transaction.amount.toLocaleString("id-ID")}${bonusText} telah ditambahkan ke ${transaction.user.email}.`,
       transaction: updatedTx,
       newBalance: updatedUser.balance,
     });

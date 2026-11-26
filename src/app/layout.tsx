@@ -1,49 +1,82 @@
 import type { Metadata } from "next";
+import { Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
+import { BRAND } from "@/lib/brand";
 import "./globals.css";
 
-const siteUrl = process.env.NEXT_PUBLIC_APP_URL || "https://ai-api-store-iota.vercel.app";
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-sans",
+  display: "swap",
+});
+
+const jetbrainsMono = JetBrains_Mono({
+  subsets: ["latin"],
+  variable: "--font-mono",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
-  metadataBase: new URL(siteUrl),
-  title: "Nusantara AI — Gateway AI API Universal Tanpa Kartu Kredit",
-  description:
-    "Akses 14+ model AI terbaik dunia (Claude 3.7 Sonnet, DeepSeek R1, OpenAI o3-mini & GPT-4o, Gemini 2.5 Pro) dalam satu API Key standar OpenAI. Bayar instan via QRIS Rupiah.",
+  metadataBase: new URL(BRAND.siteUrl),
+  title: {
+    default: `${BRAND.fullName} — Gateway API AI Indonesia (Claude, GPT-4o, DeepSeek) Bayar QRIS`,
+    template: `%s | ${BRAND.fullName}`,
+  },
+  description: BRAND.description,
   keywords: [
-    "AI API Store",
-    "Jual API Key AI",
-    "OpenAI API Indonesia",
-    "Claude 3.7 Sonnet API",
-    "Claude 3.5 Sonnet",
-    "DeepSeek R1 API",
-    "DeepSeek V3",
-    "OpenAI o3-mini",
-    "Gemini 2.5 Pro API",
-    "API Key Tanpa Kartu Kredit",
-    "Top Up QRIS AI",
-    "Cursor IDE Indonesia",
-    "Cline AI Gateway",
-    "LLM Proxy Indonesia",
+    "Aksara API",
+    "API Key AI Indonesia",
+    "OpenAI API Tanpa Kartu Kredit",
+    "Beli API ChatGPT Pakai QRIS",
+    "Claude 3.7 Sonnet API Indonesia",
+    "DeepSeek R1 API Rupiah",
+    "OpenAI o3-mini API",
+    "Gemini 2.5 Pro API Indonesia",
+    "Cursor IDE API Key Indonesia",
+    "VS Code Cline API Indonesia",
+    "Alternatif OpenRouter QRIS",
+    "Gateway LLM Indonesia",
+    "Pay-as-you-go AI API Rupiah",
+    "Jual API Key OpenAI Murah",
   ],
-  authors: [{ name: "Nusantara AI Gateway" }],
+  authors: [{ name: BRAND.fullName, url: BRAND.siteUrl }],
+  creator: BRAND.fullName,
+  publisher: BRAND.fullName,
+  alternates: {
+    canonical: "/",
+  },
   openGraph: {
-    title: "Nusantara AI — Akses Semua AI Dunia Tanpa Kartu Kredit",
+    title: `${BRAND.fullName} — Akses 14+ Model AI Dunia Pakai QRIS Rupiah`,
     description:
-      "Satu API Key kompatibel OpenAI untuk Claude 3.7, DeepSeek R1, o3-mini, GPT-4o, dan Gemini. Top-up saldo mulai Rp 10.000 via QRIS.",
-    url: siteUrl,
-    siteName: "Nusantara AI Gateway",
+      "Satu API key kompatibel OpenAI untuk Claude 3.7 Sonnet, DeepSeek R1, o3-mini, GPT-4o, dan Gemini 2.5 Pro. Tanpa kartu kredit, saldo aktif selamanya.",
+    url: BRAND.siteUrl,
+    siteName: BRAND.fullName,
     locale: "id_ID",
     type: "website",
   },
   twitter: {
     card: "summary_large_image",
-    title: "Nusantara AI — Gateway AI API Universal Indonesia",
+    title: `${BRAND.fullName} — Gateway API AI Indonesia Tanpa Kartu Kredit`,
     description:
-      "Gunakan GPT-4o, Claude 3.7 Sonnet, DeepSeek R1, dan Gemini langsung di Cursor IDE atau Python. Bayar mudah via QRIS Rupiah.",
+      "Gunakan Claude 3.7, DeepSeek R1, GPT-4o, dan Gemini di Cursor IDE, Cline, atau Python SDK. Bayar mudah via QRIS mulai Rp 10.000.",
   },
   robots: {
     index: true,
     follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      "max-video-preview": -1,
+      "max-image-preview": "large",
+      "max-snippet": -1,
+    },
   },
+  ...(process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION
+    ? {
+        verification: {
+          google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+        },
+      }
+    : {}),
 };
 
 export default function RootLayout({
@@ -52,8 +85,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="id" className="dark scroll-smooth">
-      <body className="min-h-screen bg-[#040711] text-slate-100 antialiased selection:bg-indigo-500 selection:text-white">
+    <html
+      lang="id"
+      className={`dark scroll-smooth ${plusJakarta.variable} ${jetbrainsMono.variable}`}
+    >
+      <body className="min-h-screen bg-[#09090b] text-zinc-50 antialiased selection:bg-emerald-500/30 selection:text-emerald-200">
         {children}
       </body>
     </html>

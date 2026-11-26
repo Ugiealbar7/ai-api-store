@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { BRAND, calculateTopupBonus } from "@/lib/brand";
 import { prisma } from "@/lib/db";
 import crypto from "crypto";
 
@@ -14,7 +15,7 @@ export async function GET() {
       take: 10,
     });
     return NextResponse.json({ success: true, transactions });
-  } catch (error: any) {
+  } catch {
     return NextResponse.json({ error: "Gagal mengambil riwayat transaksi." }, { status: 500 });
   }
 }
@@ -31,13 +32,12 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Minimal top up adalah Rp 10.000." }, { status: 400 });
     }
 
-    // Kode unik 3 digit acak (100 - 999) agar mudah dicocokkan saat mutasi rekening/merchant masuk
     const uniqueCode = Math.floor(100 + Math.random() * 899);
     const totalAmount = nominal + uniqueCode;
+    const { bonusPercent, bonusAmount } = calculateTopupBonus(nominal);
 
     const orderId = `TOPUP-${Date.now()}-${crypto.randomBytes(2).toString("hex").toUpperCase()}`;
 
-    // Buat transaksi di database
     const transaction = await prisma.transaction.create({
       data: {
         userId: user.id,
@@ -56,8 +56,11 @@ export async function POST(req: Request) {
       baseAmount: nominal,
       uniqueCode,
       totalAmount,
-      merchantName: "Aiugi, Service",
-      nmid: "ID1026641373646",
+      bonusPercent,
+      bonusAmount,
+      totalCreditedAmount: totalAmount + bonusAmount,
+      merchantName: BRAND.merchantName,
+      nmid: BRAND.nmid,
       qrImageUrl: "/qris.jpg",
       createdAt: transaction.createdAt,
     });

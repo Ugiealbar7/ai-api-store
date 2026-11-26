@@ -4,7 +4,6 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import {
-  Cpu,
   LayoutDashboard,
   Key,
   Wallet,
@@ -14,6 +13,7 @@ import {
   ShieldCheck,
   ChevronRight,
 } from "lucide-react";
+import BrandLogo from "@/components/BrandLogo";
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -50,34 +50,27 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   };
 
   return (
-    <div className="min-h-screen bg-[#040711] flex flex-col md:flex-row text-slate-100">
+    <div className="min-h-screen bg-[#09090b] flex flex-col md:flex-row text-zinc-100">
       {/* SIDEBAR */}
-      <aside className="w-full md:w-64 border-r border-white/[0.08] bg-[#060a16] p-4 flex flex-col justify-between shrink-0">
+      <aside className="w-full md:w-64 border-b md:border-b-0 md:border-r border-zinc-800/80 bg-[#0c0c0f] p-4 flex flex-col justify-between shrink-0">
         <div>
-          {/* Brand header */}
-          <Link href="/" className="flex items-center gap-2.5 px-2 py-3 mb-6 group">
-            <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/30 group-hover:scale-105 transition">
-              <Cpu className="h-4 w-4" />
-            </div>
-            <div className="flex items-baseline gap-1.5">
-              <span className="font-bold text-base text-white tracking-tight">Nusantara AI</span>
-              <span className="text-[10px] font-mono uppercase text-indigo-400 bg-indigo-500/10 border border-indigo-500/20 px-1 py-0.2 rounded">
-                v1
-              </span>
-            </div>
-          </Link>
+          <div className="px-2 py-2.5 mb-5">
+            <BrandLogo href="/" size="md" />
+          </div>
 
-          {/* User Balance Snippet */}
-          <div className="bg-[#030611] border border-white/[0.08] rounded-xl p-3.5 mb-6 shadow-sm">
-            <span className="text-[11px] font-mono uppercase text-slate-400 block mb-1">Saldo Tersedia</span>
-            <div className="text-xl font-bold text-emerald-400 font-mono tracking-tight">
+          {/* Balance Card */}
+          <div className="bg-[#111114] border border-zinc-800 rounded-xl p-3.5 mb-5">
+            <span className="text-[11px] font-mono uppercase text-zinc-400 block mb-1">
+              Saldo Tersedia
+            </span>
+            <div className="text-xl font-bold text-emerald-400 font-mono tracking-tight tabular-nums">
               Rp {user?.balance?.toLocaleString("id-ID") ?? "..."}
             </div>
             <Link
               href="/dashboard/topup"
-              className="mt-2.5 block text-center text-xs font-medium py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-300 border border-emerald-500/20 transition"
+              className="mt-2.5 block text-center text-xs font-semibold py-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 transition"
             >
-              + Top Up Saldo QRIS
+              + Top Up QRIS
             </Link>
           </div>
 
@@ -90,17 +83,17 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition ${
+                  className={`flex items-center justify-between px-3 py-2 rounded-lg text-xs font-medium transition ${
                     isActive
-                      ? "bg-indigo-600/15 text-indigo-300 border border-indigo-500/30 font-semibold"
-                      : "text-slate-400 hover:text-white hover:bg-slate-900/60"
+                      ? "bg-zinc-900 text-zinc-50 border border-zinc-800 font-semibold"
+                      : "text-zinc-400 hover:text-zinc-100 hover:bg-zinc-900/60"
                   }`}
                 >
                   <div className="flex items-center gap-2.5">
-                    <Icon className={`h-4 w-4 ${isActive ? "text-indigo-400" : "text-slate-400"}`} />
+                    <Icon className={`h-4 w-4 ${isActive ? "text-emerald-400" : "text-zinc-500"}`} />
                     <span>{item.label}</span>
                   </div>
-                  {isActive && <ChevronRight className="h-3 w-3 text-indigo-400" />}
+                  {isActive && <ChevronRight className="h-3 w-3 text-emerald-400" />}
                 </Link>
               );
             })}
@@ -108,16 +101,16 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         {/* User Profile & Logout */}
-        <div className="pt-4 border-t border-white/[0.08] mt-6">
+        <div className="pt-4 border-t border-zinc-800/80 mt-6">
           <div className="flex items-center justify-between px-2">
             <div className="overflow-hidden mr-2">
-              <span className="block text-xs font-semibold text-white truncate">{user?.name}</span>
-              <span className="block text-[11px] text-slate-400 font-mono truncate">{user?.email}</span>
+              <span className="block text-xs font-semibold text-zinc-100 truncate">{user?.name}</span>
+              <span className="block text-[11px] text-zinc-500 font-mono truncate">{user?.email}</span>
             </div>
             <button
               onClick={handleLogout}
-              title="Logout"
-              className="p-1.5 text-slate-400 hover:text-red-400 hover:bg-slate-900 rounded-lg transition"
+              title="Keluar"
+              className="p-1.5 text-zinc-400 hover:text-red-400 hover:bg-zinc-900 rounded-lg transition"
             >
               <LogOut className="h-4 w-4" />
             </button>

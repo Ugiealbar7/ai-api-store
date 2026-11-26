@@ -5,12 +5,15 @@ import { verifyPassword, signToken } from "@/lib/auth";
 export async function POST(req: Request) {
   try {
     const { email, password } = await req.json();
+    const cleanEmail = typeof email === "string" ? email.trim() : "";
 
-    if (!email || !password) {
+    if (!cleanEmail || !password) {
       return NextResponse.json({ error: "Email dan password wajib diisi." }, { status: 400 });
     }
 
-    const user = await prisma.user.findUnique({ where: { email } });
+    const user = await prisma.user.findFirst({
+      where: { email: { equals: cleanEmail, mode: "insensitive" } },
+    });
     if (!user) {
       return NextResponse.json({ error: "Email atau password salah." }, { status: 401 });
     }

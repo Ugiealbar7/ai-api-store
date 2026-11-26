@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { validateApiKey } from "@/lib/auth";
-import { calculateTokenCostIdr, resolveUpstreamModelId, normalizeModelId } from "@/lib/pricing";
+import { BRAND } from "@/lib/brand";
+import {
+  AVAILABLE_MODELS,
+  calculateTokenCostIdr,
+  resolveUpstreamModelId,
+  normalizeModelId,
+} from "@/lib/pricing";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -48,11 +54,40 @@ export async function POST(req: Request) {
       );
     }
 
-    if (apiKey.user.balance <= 0) {
+    const body = await req.json();
+    const rawModel = body.model || "gpt-4o-mini";
+    const internalModel = normalizeModelId(rawModel);
+    const modelConfig = AVAILABLE_MODELS[internalModel] || AVAILABLE_MODELS["gpt-4o-mini"];
+    const isStream = Boolean(body.stream);
+
+    // Proteksi saldo minimum per tier model agar akun tidak tekor ke minus
+    const minRequiredBalanceIdr =
+      internalModel === "o1"
+        ? 3000
+        : modelConfig.inputCostPer1MUsd >= 2.0
+        ? 300
+        : 20;
+
+    const estimatedPromptTokens = Math.max(
+      10,
+      Math.ceil(JSON.stringify(body.messages || "").length / 4)
+    );
+    const estimatedPrecheckCost = calculateTokenCostIdr(
+      internalModel,
+      estimatedPromptTokens,
+      50
+    ).costIdr;
+    const requiredBalance = Math.max(minRequiredBalanceIdr, estimatedPrecheckCost);
+
+    if (apiKey.user.balance <= 0 || apiKey.user.balance < requiredBalance) {
       return NextResponse.json(
         {
           error: {
-            message: `Saldo Anda tidak mencukupi (Rp ${apiKey.user.balance.toLocaleString("id-ID")}). Silakan top-up saldo di dashboard.`,
+            message: `Saldo Anda (Rp ${Math.max(0, apiKey.user.balance).toLocaleString(
+              "id-ID"
+            )}) belum cukup untuk model ${internalModel} (butuh min. Rp ${requiredBalance.toLocaleString(
+              "id-ID"
+            )}). Silakan isi ulang via QRIS di ${BRAND.siteUrl}/dashboard/topup.`,
             type: "insufficient_balance",
           },
         },
@@ -60,15 +95,9 @@ export async function POST(req: Request) {
       );
     }
 
-    const body = await req.json();
-    const rawModel = body.model || "gpt-4o-mini";
-    const internalModel = normalizeModelId(rawModel);
-    const isStream = Boolean(body.stream);
-
     const upstreamBase = (process.env.UPSTREAM_BASE_URL || "https://openrouter.ai/api/v1").replace(/\/+$/, "");
     const upstreamKey = process.env.UPSTREAM_API_KEY || "";
 
-    // Sesuaikan model jika upstream adalah OpenRouter (misal: deepseek-reasoner -> deepseek/deepseek-r1)
     const upstreamModel = resolveUpstreamModelId(rawModel, upstreamBase);
 
     const upstreamPayload = {
@@ -84,7 +113,6 @@ export async function POST(req: Request) {
         : {}),
     };
 
-    // Teruskan request ke Upstream AI
     let upstreamResponse: Response;
     try {
       upstreamResponse = await fetch(`${upstreamBase}/chat/completions`, {
@@ -92,8 +120,8 @@ export async function POST(req: Request) {
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${upstreamKey}`,
-          "HTTP-Referer": process.env.NEXT_PUBLIC_APP_URL || "https://ai-api-store.vercel.app",
-          "X-Title": "Nusantara AI Gateway",
+          "HTTP-Referer": BRAND.siteUrl,
+          "X-Title": BRAND.fullName,
         },
         body: JSON.stringify(upstreamPayload),
       });
@@ -124,13 +152,16 @@ export async function POST(req: Request) {
     // NON-STREAMING RESPONSE
     if (!isStream) {
       const data = await upstreamResponse.json();
-      const promptTokens = data.usage?.prompt_tokens || Math.max(10, Math.ceil(JSON.stringify(body.messages || "").length / 4));
-      const completionTokens = data.usage?.completion_tokens || Math.max(10, Math.ceil(JSON.stringify(data.choices?.[0]?.message || "").length / 4));
+      const promptTokens =
+        data.usage?.prompt_tokens ||
+        Math.max(10, Math.ceil(JSON.stringify(body.messages || "").length / 4));
+      const completionTokens =
+        data.usage?.completion_tokens ||
+        Math.max(10, Math.ceil(JSON.stringify(data.choices?.[0]?.message || "").length / 4));
       const totalTokens = promptTokens + completionTokens;
 
       const { costIdr } = calculateTokenCostIdr(internalModel, promptTokens, completionTokens);
 
-      // Potong saldo & catat log pemakaian di database
       try {
         await prisma.$transaction([
           prisma.user.update({
@@ -160,7 +191,6 @@ export async function POST(req: Request) {
         console.error("Gagal potong saldo non-stream:", dbErr);
       }
 
-      // Pastikan response mengembalikan model nama asli yang diminta client
       if (data.model && data.model !== rawModel) {
         data.model = rawModel;
       }
@@ -169,7 +199,6 @@ export async function POST(req: Request) {
     }
 
     // STREAMING RESPONSE (SSE)
-    const encoder = new TextEncoder();
     const decoder = new TextDecoder();
     let accumulatedContent = "";
     let capturedPromptTokens = 0;
@@ -191,7 +220,6 @@ export async function POST(req: Request) {
             const chunk = decoder.decode(value, { stream: true });
             controller.enqueue(value);
 
-            // Parsing usage jika upstream mengirim chunk usage (standar OpenAI stream_options)
             const lines = chunk.split("\n");
             for (const line of lines) {
               if (line.startsWith("data: ") && line.trim() !== "data: [DONE]") {
@@ -213,7 +241,6 @@ export async function POST(req: Request) {
         } finally {
           controller.close();
 
-          // Estimasi token jika upstream tidak mengirim objek usage
           const promptTokens =
             capturedPromptTokens ||
             Math.max(15, Math.ceil(JSON.stringify(body.messages || "").length / 4));
@@ -223,7 +250,6 @@ export async function POST(req: Request) {
 
           const { costIdr } = calculateTokenCostIdr(internalModel, promptTokens, completionTokens);
 
-          // Potong saldo pengguna
           try {
             await prisma.$transaction([
               prisma.user.update({

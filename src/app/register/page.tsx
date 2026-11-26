@@ -2,7 +2,18 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Cpu, Loader2, Gift, ArrowRight } from "lucide-react";
+import { Loader2, Gift, ArrowRight } from "lucide-react";
+import BrandLogo from "@/components/BrandLogo";
+import { STARTER_TRIAL_BALANCE_IDR } from "@/lib/brand";
+
+function getSafeRedirectUrl(): string {
+  if (typeof window === "undefined") return "/dashboard";
+  const param = new URLSearchParams(window.location.search).get("redirect");
+  if (param && param.startsWith("/") && !param.startsWith("//")) {
+    return param;
+  }
+  return "/dashboard";
+}
 
 export default function RegisterPage() {
   const [name, setName] = useState("");
@@ -28,7 +39,7 @@ export default function RegisterPage() {
         throw new Error(data.error || "Gagal mendaftar.");
       }
 
-      window.location.href = "/dashboard";
+      window.location.href = getSafeRedirectUrl();
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -37,83 +48,92 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen bg-[#040711] flex items-center justify-center p-4 relative overflow-hidden">
-      <div className="absolute inset-0 bg-grid-pattern mask-radial opacity-50 pointer-events-none" />
+    <div className="min-h-screen bg-[#09090b] flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute inset-0 bg-hairline-grid mask-radial pointer-events-none" />
 
-      <div className="w-full max-w-md glass-panel p-8 rounded-2xl relative z-10">
+      <div className="w-full max-w-md surface-card p-8 rounded-xl relative z-10">
         <div className="text-center mb-6">
-          <Link href="/" className="inline-flex items-center gap-2 mb-4 group">
-            <div className="h-8 w-8 rounded-lg bg-indigo-600 flex items-center justify-center text-white shadow-md shadow-indigo-600/30 group-hover:scale-105 transition">
-              <Cpu className="h-4 w-4" />
-            </div>
-            <span className="font-bold text-base text-white">Nusantara AI</span>
-          </Link>
-          <h2 className="text-2xl font-bold text-white tracking-tight">Buat Akun Developer</h2>
-          <p className="text-xs text-slate-400 mt-1">Dapatkan API key siap pakai dalam hitungan detik</p>
+          <div className="flex justify-center mb-5">
+            <BrandLogo href="/" size="lg" />
+          </div>
+          <h1 className="text-2xl font-bold text-zinc-50 tracking-tight">Buat Akun Developer</h1>
+          <p className="text-xs text-zinc-400 mt-1">
+            Dapatkan API key standar OpenAI siap pakai dalam hitungan detik
+          </p>
         </div>
 
-        <div className="mb-6 p-3 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center gap-2.5">
-          <Gift className="h-4 w-4 text-indigo-400 shrink-0" />
-          <p className="text-xs text-indigo-300">
-            <strong>Bonus Pendaftaran:</strong> Saldo gratis Rp 10.000 otomatis aktif di akun baru Anda.
+        <div className="mb-6 p-3.5 rounded-lg bg-emerald-500/10 border border-emerald-500/25 flex items-center gap-2.5">
+          <Gift className="h-4 w-4 text-emerald-400 shrink-0" />
+          <p className="text-xs text-emerald-200 leading-relaxed">
+            <strong>Saldo Uji Coba:</strong> Gratis Rp{" "}
+            {STARTER_TRIAL_BALANCE_IDR.toLocaleString("id-ID")} untuk mengetes API di akun baru Anda.
           </p>
         </div>
 
         {error && (
-          <div className="mb-6 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs text-center">
+          <div className="mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/25 text-red-400 text-xs text-center">
             {error}
           </div>
         )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1.5">Nama Lengkap / Tim</label>
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">
+              Nama Lengkap / Tim
+            </label>
             <input
               type="text"
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder="Budi Santoso"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[#030611] border border-white/[0.08] text-white placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 transition"
+              className="w-full px-3.5 py-2.5 rounded-lg bg-[#0c0c0f] border border-zinc-800 text-zinc-100 placeholder-zinc-500 text-xs focus:outline-none focus:border-zinc-500 transition"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1.5">Email</label>
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Email</label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="budi@domain.com"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[#030611] border border-white/[0.08] text-white placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 transition"
+              placeholder="nama@gmail.com"
+              className="w-full px-3.5 py-2.5 rounded-lg bg-[#0c0c0f] border border-zinc-800 text-zinc-100 placeholder-zinc-500 text-xs focus:outline-none focus:border-zinc-500 transition"
             />
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-300 mb-1.5">Password</label>
+            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Password</label>
             <input
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Minimal 6 karakter"
-              className="w-full px-3.5 py-2.5 rounded-xl bg-[#030611] border border-white/[0.08] text-white placeholder-slate-500 text-xs focus:outline-none focus:border-indigo-500 transition"
+              className="w-full px-3.5 py-2.5 rounded-lg bg-[#0c0c0f] border border-zinc-800 text-zinc-100 placeholder-zinc-500 text-xs focus:outline-none focus:border-zinc-500 transition"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full mt-2 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs flex items-center justify-center gap-2 transition disabled:opacity-50 shadow-md shadow-indigo-600/20"
+            className="w-full mt-2 py-3 rounded-lg bg-zinc-50 hover:bg-zinc-200 text-zinc-950 font-semibold text-xs flex items-center justify-center gap-2 transition disabled:opacity-50"
           >
-            {loading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Daftar & Klaim Saldo Rp 10.000"}
+            {loading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <>
+                <span>Daftar & Ambil API Key</span>
+                <ArrowRight className="h-3.5 w-3.5" />
+              </>
+            )}
           </button>
         </form>
 
-        <p className="text-center text-xs text-slate-400 mt-6">
+        <p className="text-center text-xs text-zinc-400 mt-6">
           Sudah punya akun?{" "}
-          <Link href="/login" className="text-indigo-400 hover:text-indigo-300 font-medium">
+          <Link href="/login" className="text-emerald-400 hover:text-emerald-300 font-semibold">
             Masuk di sini
           </Link>
         </p>
