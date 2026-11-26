@@ -37,6 +37,8 @@ export const metadata: Metadata = {
     "Beli API ChatGPT Pakai QRIS",
     "Cursor IDE API Key Indonesia",
     "VS Code Cline API Indonesia",
+    "OpenClaw API Key QRIS",
+    "Hermes Agent Custom API Indonesia",
     "Alternatif OpenRouter QRIS",
     "Gateway LLM Indonesia",
     "Pay-as-you-go AI API Rupiah",

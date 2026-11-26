@@ -29,6 +29,12 @@ export default function sitemap(): MetadataRoute.Sitemap {
       priority: 0.85,
     },
     {
+      url: `${BRAND.siteUrl}/openclaw-hermes`,
+      lastModified: now,
+      changeFrequency: "weekly",
+      priority: 0.85,
+    },
+    {
       url: `${BRAND.siteUrl}/register`,
       lastModified: now,
       changeFrequency: "monthly",

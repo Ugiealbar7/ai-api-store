@@ -47,6 +47,11 @@ export default function Footer() {
                   Panduan Cursor IDE & Cline
                 </Link>
               </li>
+              <li>
+                <Link href="/openclaw-hermes" className="hover:text-zinc-100 transition">
+                  Panduan OpenClaw & Hermes Agent
+                </Link>
+              </li>
             </ul>
           </div>
 

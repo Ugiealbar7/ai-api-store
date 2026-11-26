@@ -178,14 +178,15 @@ Coba langsung: ${originUrl}`,
     {
       id: "community",
       title: "Grup Telegram / Discord / Facebook Programmer Indonesia",
-      content: `[SHARE TOOL] Buat teman-teman dev yang butuh API AI untuk Cursor IDE, VS Code Cline, bot WA/Telegram, atau workflow n8n tanpa kartu kredit:
+      content: `[SHARE TOOL] Buat teman-teman dev yang butuh API AI untuk Cursor IDE, VS Code Cline, OpenClaw, Hermes Agent, bot WA/Telegram, atau n8n tanpa kartu kredit:
 
 Coba ${BRAND.fullName} (${originUrl})
 ✓ 330+ model AI terbaru sudah live (Gemini 4 Hydrogen, GPT-6.2 Astra, Claude Opus 5.5, DeepSeek V4.1, Qwen4 Max)
 ✓ Bayar pakai QRIS Rupiah mulai Rp 10.000 (bonus saldo s.d. +5%)
-✓ Drop-in replacement OpenAI SDK — tinggal ganti Base URL & API Key
+✓ Drop-in replacement OpenAI SDK — support /api/v1 dan /v1 langsung
 
-Panduan Cursor IDE: ${originUrl}/cursor-ide`,
+Panduan Cursor IDE: ${originUrl}/cursor-ide
+Panduan OpenClaw & Hermes: ${originUrl}/openclaw-hermes`,
     },
     {
       id: "tiktok",

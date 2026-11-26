@@ -6,7 +6,7 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/harga", "/docs", "/cursor-ide", "/login", "/register"],
+        allow: ["/", "/harga", "/docs", "/cursor-ide", "/openclaw-hermes", "/login", "/register"],
         disallow: ["/dashboard/", "/api/"],
       },
     ],

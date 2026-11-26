@@ -103,8 +103,28 @@ API Key:         sk-live-xxxxxxxxxxxxxxxxxxxx
 Model:           deepseek/deepseek-v4.1-flash (atau anthropic/claude-opus-5.5)`,
     },
     {
-      title: "5. cURL / Terminal Shell",
-      desc: "Uji cepat endpoint langsung dari terminal atau CI/CD:",
+      title: "5. OpenClaw & Hermes Agent (AI Agent CLI)",
+      desc: "Mendukung endpoint OpenAI Chat Completions & Tool Calling untuk agent otonom (konteks 1M token):",
+      code: `# --- OpenClaw (CLI) ---
+openclaw onboard --auth-choice custom-api-key \\
+  --custom-provider-id aksara-api \\
+  --custom-compatibility openai \\
+  --custom-base-url "${apiBaseUrl}" \\
+  --custom-api-key "sk-live-xxxxxxxxxxxxxxxxxxxx" \\
+  --custom-model-id "google/gemini-4-hydrogen"
+
+# --- Hermes Agent (~/.hermes/config.yaml) ---
+model:
+  default: google/gemini-4-hydrogen
+  provider: custom
+providers:
+  custom:
+    base_url: ${apiBaseUrl}
+    api_key: sk-live-xxxxxxxxxxxxxxxxxxxx`,
+    },
+    {
+      title: "6. cURL / Terminal Shell",
+      desc: "Uji cepat endpoint langsung dari terminal atau CI/CD (URL /api/v1 maupun /v1 keduanya aktif):",
       code: `curl ${apiBaseUrl}/chat/completions \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer sk-live-xxxxxxxxxxxxxxxxxxxx" \\

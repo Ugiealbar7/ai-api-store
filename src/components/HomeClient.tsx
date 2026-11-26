@@ -290,16 +290,18 @@ console.log(res.choices[0].message.content);`,
             <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500">
               Otomatis terbaca di /v1/models untuk
             </span>
-            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-xs font-mono text-zinc-300">
+            <div className="flex flex-wrap items-center justify-center gap-x-7 gap-y-2 text-xs font-mono text-zinc-300">
               <span>Cursor IDE</span>
               <span className="text-zinc-700">•</span>
               <span>VS Code Cline / Roo</span>
               <span className="text-zinc-700">•</span>
+              <Link href="/openclaw-hermes" className="hover:text-emerald-400 transition">
+                OpenClaw & Hermes Agent
+              </Link>
+              <span className="text-zinc-700">•</span>
               <span>n8n AI Agent</span>
               <span className="text-zinc-700">•</span>
               <span>OpenAI Python & TS SDK</span>
-              <span className="text-zinc-700">•</span>
-              <span>NextChat / OpenWebUI</span>
             </div>
           </div>
         </section>
