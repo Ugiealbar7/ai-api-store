@@ -1,10 +1,12 @@
 import HomeClient from "@/components/HomeClient";
 import { BRAND } from "@/lib/brand";
 import { HOME_FAQS } from "@/lib/faq";
-import { getModelDisplayPrices } from "@/lib/pricing";
+import { getLiveDisplayModels } from "@/lib/openrouter-catalog";
 
-export default function HomePage() {
-  const models = getModelDisplayPrices();
+export const revalidate = 1800;
+
+export default async function HomePage() {
+  const models = await getLiveDisplayModels();
 
   const softwareJsonLd = {
     "@context": "https://schema.org",

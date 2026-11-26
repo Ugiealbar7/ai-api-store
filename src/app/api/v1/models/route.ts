@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
-import { AVAILABLE_MODELS } from "@/lib/pricing";
+import { getLiveModelsCatalog } from "@/lib/openrouter-catalog";
+import { USD_TO_IDR } from "@/lib/pricing";
 
 export const dynamic = "force-dynamic";
 
@@ -17,15 +18,28 @@ export async function OPTIONS() {
 }
 
 export async function GET() {
-  const models = Object.values(AVAILABLE_MODELS).map((m) => ({
-    id: m.id,
-    object: "model",
-    created: 1700000000,
-    owned_by: m.provider.toLowerCase(),
-    permission: [],
-    root: m.id,
-    parent: null,
-  }));
+  const liveCatalog = await getLiveModelsCatalog();
+
+  const models = liveCatalog.map((m) => {
+    const inputPer1kIdr = (m.inputCostPer1MUsd / 1000) * USD_TO_IDR * m.markupMultiplier;
+    const outputPer1kIdr = (m.outputCostPer1MUsd / 1000) * USD_TO_IDR * m.markupMultiplier;
+    return {
+      id: m.id,
+      object: "model",
+      created: m.created || 1700000000,
+      owned_by: m.provider.toLowerCase(),
+      name: m.name,
+      provider: m.provider,
+      category: m.category,
+      context_window: m.contextWindow,
+      featured: Boolean(m.featured),
+      display_input_idr_1k: `Rp ${inputPer1kIdr.toFixed(2)}`,
+      display_output_idr_1k: `Rp ${outputPer1kIdr.toFixed(2)}`,
+      permission: [],
+      root: m.id,
+      parent: null,
+    };
+  });
 
   return NextResponse.json(
     {

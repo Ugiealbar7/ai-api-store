@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { ArrowRight, Check, Copy } from "lucide-react";
+import { ArrowRight, Check, Copy, Search } from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import type { ModelPricing } from "@/lib/pricing";
 
@@ -15,6 +15,8 @@ export default function PublicDocsClient({ models }: { models: DisplayModel[] })
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [copiedBaseUrl, setCopiedBaseUrl] = useState(false);
   const [apiBaseUrl, setApiBaseUrl] = useState(`${BRAND.siteUrl}/api/v1`);
+  const [modelSearch, setModelSearch] = useState("");
+  const [limit, setLimit] = useState(25);
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -34,13 +36,26 @@ export default function PublicDocsClient({ models }: { models: DisplayModel[] })
     setTimeout(() => setCopiedBaseUrl(false), 1800);
   };
 
+  const filteredModels = useMemo(() => {
+    const q = modelSearch.trim().toLowerCase();
+    if (!q) return models;
+    return models.filter(
+      (m) =>
+        m.id.toLowerCase().includes(q) ||
+        m.name.toLowerCase().includes(q) ||
+        m.provider.toLowerCase().includes(q)
+    );
+  }, [models, modelSearch]);
+
+  const visibleModels = filteredModels.slice(0, limit);
+
   const snippets = [
     {
       title: "1. Cursor IDE & VS Code Cline / Roo Code",
       desc: "Buka Settings → Models → pilih OpenAI Compatible / Override OpenAI Base URL:",
       code: `Base URL:  ${apiBaseUrl}
 API Key:   sk-live-xxxxxxxxxxxxxxxxxxxx
-Model ID:  claude-3-7-sonnet (atau deepseek-reasoner, gpt-4o)`,
+Model ID:  google/gemini-4-hydrogen (atau openai/gpt-6.2-astra, anthropic/claude-opus-5.5)`,
     },
     {
       title: "2. Python (OpenAI SDK Resmi)",
@@ -53,7 +68,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="deepseek-reasoner",
+    model="google/gemini-4-hydrogen",
     messages=[{"role": "user", "content": "Jelaskan clean architecture dalam 3 poin."}],
     stream=True
 )
@@ -73,7 +88,7 @@ const client = new OpenAI({
 });
 
 const completion = await client.chat.completions.create({
-  model: "gpt-4o-mini",
+  model: "openai/gpt-6.2-astra",
   messages: [{ role: "user", content: "Buatkan validasi Zod untuk form register." }],
 });
 
@@ -85,7 +100,7 @@ console.log(completion.choices[0].message.content);`,
       code: `Credential Type: OpenAI API
 Base URL:        ${apiBaseUrl}
 API Key:         sk-live-xxxxxxxxxxxxxxxxxxxx
-Model:           gemini-2.5-flash (atau deepseek-chat, claude-3-7-sonnet)`,
+Model:           deepseek/deepseek-v4.1-flash (atau anthropic/claude-opus-5.5)`,
     },
     {
       title: "5. cURL / Terminal Shell",
@@ -94,7 +109,7 @@ Model:           gemini-2.5-flash (atau deepseek-chat, claude-3-7-sonnet)`,
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer sk-live-xxxxxxxxxxxxxxxxxxxx" \\
   -d '{
-    "model": "deepseek-chat",
+    "model": "anthropic/claude-opus-5.5",
     "messages": [{"role": "user", "content": "Halo!"}]
   }'`,
     },
@@ -180,9 +195,25 @@ Model:           gemini-2.5-flash (atau deepseek-chat, claude-3-7-sonnet)`,
 
       {/* Endpoints & Models Reference */}
       <section className="space-y-4">
-        <h2 className="text-xl sm:text-2xl font-bold text-zinc-50">
-          Daftar Parameter Model ID Resmi
-        </h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h2 className="text-xl sm:text-2xl font-bold text-zinc-50">
+            Referensi Model ID ({models.length}+ Live)
+          </h2>
+          <div className="relative">
+            <Search className="h-3.5 w-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={modelSearch}
+              onChange={(e) => {
+                setModelSearch(e.target.value);
+                setLimit(25);
+              }}
+              placeholder="Cari Model ID..."
+              className="w-full sm:w-64 pl-8 pr-3 py-2 rounded-lg bg-[#111114] border border-zinc-800 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
+            />
+          </div>
+        </div>
+
         <div className="surface-card rounded-xl overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full text-left text-xs">
@@ -196,19 +227,35 @@ Model:           gemini-2.5-flash (atau deepseek-chat, claude-3-7-sonnet)`,
                 </tr>
               </thead>
               <tbody className="divide-y divide-zinc-800/70">
-                {models.map((m) => (
+                {visibleModels.map((m) => (
                   <tr key={m.id} className="hover:bg-[#15151a]">
                     <td className="p-3.5 font-mono text-emerald-400 font-semibold">{m.id}</td>
                     <td className="p-3.5 text-zinc-100 font-medium">{m.name}</td>
                     <td className="p-3.5 text-zinc-400">{m.provider}</td>
-                    <td className="p-3.5 font-mono text-zinc-300">{m.displayInputPrice.split("/")[0]}</td>
-                    <td className="p-3.5 font-mono text-zinc-300">{m.displayOutputPrice.split("/")[0]}</td>
+                    <td className="p-3.5 font-mono text-zinc-300 tabular-nums">
+                      {m.displayInputPrice.split("/")[0]}
+                    </td>
+                    <td className="p-3.5 font-mono text-zinc-300 tabular-nums">
+                      {m.displayOutputPrice.split("/")[0]}
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
         </div>
+
+        {filteredModels.length > limit && (
+          <div className="text-center">
+            <button
+              type="button"
+              onClick={() => setLimit((prev) => prev + 50)}
+              className="px-4 py-2 rounded-lg bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-xs font-semibold text-zinc-200 transition"
+            >
+              Tampilkan Lebih Banyak ({filteredModels.length - limit} lagi)
+            </button>
+          </div>
+        )}
       </section>
     </div>
   );

@@ -1,12 +1,8 @@
 import { NextResponse } from "next/server";
 import { validateApiKey } from "@/lib/auth";
 import { BRAND } from "@/lib/brand";
-import {
-  AVAILABLE_MODELS,
-  calculateTokenCostIdr,
-  resolveUpstreamModelId,
-  normalizeModelId,
-} from "@/lib/pricing";
+import { USD_TO_IDR, calculateCostFromModel } from "@/lib/pricing";
+import { resolveLiveModel } from "@/lib/openrouter-catalog";
 import { prisma } from "@/lib/db";
 
 export const dynamic = "force-dynamic";
@@ -56,26 +52,38 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const rawModel = body.model || "gpt-4o-mini";
-    const internalModel = normalizeModelId(rawModel);
-    const modelConfig = AVAILABLE_MODELS[internalModel] || AVAILABLE_MODELS["gpt-4o-mini"];
     const isStream = Boolean(body.stream);
 
-    // Proteksi saldo minimum per tier model agar akun tidak tekor ke minus
-    const minRequiredBalanceIdr =
-      internalModel === "o1"
-        ? 3000
-        : modelConfig.inputCostPer1MUsd >= 2.0
-        ? 300
-        : 20;
+    const { internalModelId, upstreamModelId, modelConfig } = await resolveLiveModel(rawModel);
+
+    if (!modelConfig) {
+      return NextResponse.json(
+        {
+          error: {
+            message: `Model '${rawModel}' tidak tersedia di katalog aktif. Periksa daftar model di ${BRAND.siteUrl}/api/v1/models atau ${BRAND.siteUrl}/harga.`,
+            type: "model_not_found",
+          },
+        },
+        { status: 400, headers: corsHeaders }
+      );
+    }
+
+    // Proteksi saldo minimum dinamis sesuai harga live model agar saldo tidak mudah minus
+    const estimated2kOutputIdr = Math.ceil(
+      ((modelConfig.outputCostPer1MUsd * 2000) / 1_000_000) *
+        USD_TO_IDR *
+        modelConfig.markupMultiplier
+    );
+    const minRequiredBalanceIdr = Math.max(20, estimated2kOutputIdr);
 
     const estimatedPromptTokens = Math.max(
       10,
       Math.ceil(JSON.stringify(body.messages || "").length / 4)
     );
-    const estimatedPrecheckCost = calculateTokenCostIdr(
-      internalModel,
+    const estimatedPrecheckCost = calculateCostFromModel(
+      modelConfig,
       estimatedPromptTokens,
-      50
+      100
     ).costIdr;
     const requiredBalance = Math.max(minRequiredBalanceIdr, estimatedPrecheckCost);
 
@@ -85,7 +93,7 @@ export async function POST(req: Request) {
           error: {
             message: `Saldo Anda (Rp ${Math.max(0, apiKey.user.balance).toLocaleString(
               "id-ID"
-            )}) belum cukup untuk model ${internalModel} (butuh min. Rp ${requiredBalance.toLocaleString(
+            )}) belum cukup untuk model ${internalModelId} (butuh min. Rp ${requiredBalance.toLocaleString(
               "id-ID"
             )}). Silakan isi ulang via QRIS di ${BRAND.siteUrl}/dashboard/topup.`,
             type: "insufficient_balance",
@@ -95,14 +103,19 @@ export async function POST(req: Request) {
       );
     }
 
-    const upstreamBase = (process.env.UPSTREAM_BASE_URL || "https://openrouter.ai/api/v1").replace(/\/+$/, "");
+    const upstreamBase = (process.env.UPSTREAM_BASE_URL || "https://openrouter.ai/api/v1").replace(
+      /\/+$/,
+      ""
+    );
     const upstreamKey = process.env.UPSTREAM_API_KEY || "";
 
-    const upstreamModel = resolveUpstreamModelId(rawModel, upstreamBase);
+    const finalUpstreamModel = upstreamBase.includes("openrouter.ai")
+      ? upstreamModelId
+      : rawModel;
 
     const upstreamPayload = {
       ...body,
-      model: upstreamModel,
+      model: finalUpstreamModel,
       ...(isStream
         ? {
             stream_options: {
@@ -159,8 +172,15 @@ export async function POST(req: Request) {
         data.usage?.completion_tokens ||
         Math.max(10, Math.ceil(JSON.stringify(data.choices?.[0]?.message || "").length / 4));
       const totalTokens = promptTokens + completionTokens;
+      const upstreamCostUsd =
+        typeof data.usage?.cost === "number" ? data.usage.cost : undefined;
 
-      const { costIdr } = calculateTokenCostIdr(internalModel, promptTokens, completionTokens);
+      const { costIdr } = calculateCostFromModel(
+        modelConfig,
+        promptTokens,
+        completionTokens,
+        upstreamCostUsd
+      );
 
       try {
         await prisma.$transaction([
@@ -179,7 +199,7 @@ export async function POST(req: Request) {
             data: {
               userId: apiKey.userId,
               apiKeyId: apiKey.id,
-              model: internalModel,
+              model: internalModelId,
               promptTokens,
               completionTokens,
               totalTokens,
@@ -203,6 +223,7 @@ export async function POST(req: Request) {
     let accumulatedContent = "";
     let capturedPromptTokens = 0;
     let capturedCompletionTokens = 0;
+    let capturedUpstreamCostUsd: number | undefined;
 
     const stream = new ReadableStream({
       async start(controller) {
@@ -226,8 +247,12 @@ export async function POST(req: Request) {
                 try {
                   const parsed = JSON.parse(line.slice(6));
                   if (parsed.usage) {
-                    capturedPromptTokens = parsed.usage.prompt_tokens;
-                    capturedCompletionTokens = parsed.usage.completion_tokens;
+                    capturedPromptTokens = parsed.usage.prompt_tokens || capturedPromptTokens;
+                    capturedCompletionTokens =
+                      parsed.usage.completion_tokens || capturedCompletionTokens;
+                    if (typeof parsed.usage.cost === "number") {
+                      capturedUpstreamCostUsd = parsed.usage.cost;
+                    }
                   }
                   if (parsed.choices?.[0]?.delta?.content) {
                     accumulatedContent += parsed.choices[0].delta.content;
@@ -248,7 +273,12 @@ export async function POST(req: Request) {
             capturedCompletionTokens || Math.max(1, Math.ceil(accumulatedContent.length / 4));
           const totalTokens = promptTokens + completionTokens;
 
-          const { costIdr } = calculateTokenCostIdr(internalModel, promptTokens, completionTokens);
+          const { costIdr } = calculateCostFromModel(
+            modelConfig,
+            promptTokens,
+            completionTokens,
+            capturedUpstreamCostUsd
+          );
 
           try {
             await prisma.$transaction([
@@ -267,7 +297,7 @@ export async function POST(req: Request) {
                 data: {
                   userId: apiKey.userId,
                   apiKeyId: apiKey.id,
-                  model: internalModel,
+                  model: internalModelId,
                   promptTokens,
                   completionTokens,
                   totalTokens,

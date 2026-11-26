@@ -3,25 +3,27 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PublicDocsClient from "@/components/PublicDocsClient";
 import { BRAND } from "@/lib/brand";
-import { getModelDisplayPrices } from "@/lib/pricing";
+import { getLiveDisplayModels } from "@/lib/openrouter-catalog";
+
+export const revalidate = 1800;
 
 export const metadata: Metadata = {
-  title: "Dokumentasi API — Cara Integrasi Cursor IDE, Cline, n8n, Python & Node.js",
+  title: "Dokumentasi API — Cara Pakai Gemini 4 Hydrogen, GPT-6.2 Astra & Claude Opus 5.5",
   description:
-    "Panduan lengkap cara memakai API Key Aksara API di Cursor IDE, VS Code Cline, Roo Code, n8n, Python OpenAI SDK, dan Node.js tanpa kartu kredit.",
+    "Panduan lengkap cara memakai API Key Aksara API di Cursor IDE, VS Code Cline, n8n, Python SDK, dan Node.js untuk 330+ model AI terbaru tanpa kartu kredit.",
   alternates: {
     canonical: "/docs",
   },
   openGraph: {
     title: `Dokumentasi Integrasi API | ${BRAND.fullName}`,
     description:
-      "Kompatibel 100% dengan OpenAI v1 SDK. Cukup ganti Base URL dan API Key untuk memanggil 14+ model AI.",
+      "Kompatibel 100% dengan OpenAI v1 SDK. Cukup ganti Base URL dan API Key untuk memanggil 330+ model AI terbaru.",
     url: `${BRAND.siteUrl}/docs`,
   },
 };
 
-export default function PublicDocsPage() {
-  const models = getModelDisplayPrices();
+export default async function PublicDocsPage() {
+  const models = await getLiveDisplayModels();
 
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100">
@@ -38,7 +40,7 @@ export default function PublicDocsPage() {
           <p className="text-sm text-zinc-400 max-w-2xl leading-relaxed">
             Seluruh endpoint {BRAND.fullName} mengikuti spesifikasi resmi{" "}
             <code className="text-zinc-200">/v1/chat/completions</code> dan{" "}
-            <code className="text-zinc-200">/v1/models</code>, sehingga Anda tidak perlu menulis ulang kode yang sudah memakai SDK OpenAI.
+            <code className="text-zinc-200">/v1/models</code> dengan sinkronisasi otomatis ke {models.length}+ model terbaru.
           </p>
         </header>
 

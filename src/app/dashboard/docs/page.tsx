@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Copy, Check } from "lucide-react";
+import { Copy, Check, Search } from "lucide-react";
 import { BRAND } from "@/lib/brand";
 import { getModelDisplayPrices } from "@/lib/pricing";
 
@@ -9,12 +9,30 @@ export default function DashboardDocsPage() {
   const [copiedIndex, setCopiedIndex] = useState<number | null>(null);
   const [copiedBaseUrl, setCopiedBaseUrl] = useState(false);
   const [apiBaseUrl, setApiBaseUrl] = useState(`${BRAND.siteUrl}/api/v1`);
-  const models = getModelDisplayPrices();
+  const [query, setQuery] = useState("");
+  const [models, setModels] = useState<any[]>(getModelDisplayPrices());
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setApiBaseUrl(`${window.location.origin}/api/v1`);
     }
+
+    fetch("/api/v1/models")
+      .then((res) => res.json())
+      .then((d) => {
+        if (Array.isArray(d?.data) && d.data.length > 0) {
+          setModels(
+            d.data.map((m: any) => ({
+              id: m.id,
+              name: m.name || m.id,
+              provider: m.provider || m.owned_by || "",
+              displayInputPrice: m.display_input_idr_1k || "-",
+              displayOutputPrice: m.display_output_idr_1k || "-",
+            }))
+          );
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const handleCopy = (code: string, index: number) => {
@@ -29,13 +47,25 @@ export default function DashboardDocsPage() {
     setTimeout(() => setCopiedBaseUrl(false), 2000);
   };
 
+  const filteredModels = models
+    .filter((m) => {
+      const q = query.trim().toLowerCase();
+      if (!q) return true;
+      return (
+        m.id.toLowerCase().includes(q) ||
+        (m.name || "").toLowerCase().includes(q) ||
+        (m.provider || "").toLowerCase().includes(q)
+      );
+    })
+    .slice(0, 40);
+
   const codeSnippets = [
     {
       title: "1. Cursor IDE & VS Code Cline / Roo Code",
       desc: "Buka Settings di Cursor/Cline/Roo, pilih provider OpenAI / Custom OpenAI compatible:",
       code: `Base URL:  ${apiBaseUrl}
 API Key:   sk-live-xxxxxxxxxxxxxxxxxxxx
-Model:     deepseek-reasoner (atau gpt-4o, claude-3-7-sonnet)`,
+Model:     google/gemini-4-hydrogen (atau openai/gpt-6.2-astra, anthropic/claude-opus-5.5)`,
     },
     {
       title: "2. Python (OpenAI SDK Resmi)",
@@ -48,7 +78,7 @@ client = OpenAI(
 )
 
 response = client.chat.completions.create(
-    model="deepseek-reasoner",
+    model="google/gemini-4-hydrogen",
     messages=[
         {"role": "user", "content": "Jelaskan prinsip clean code dalam 3 poin singkat."}
     ],
@@ -71,7 +101,7 @@ const openai = new OpenAI({
 
 async function main() {
   const completion = await openai.chat.completions.create({
-    model: "gpt-4o-mini",
+    model: "openai/gpt-6.2-astra",
     messages: [{ role: "user", content: "Halo! Bantu buatkan outline artikel teknologi." }],
   });
 
@@ -87,19 +117,11 @@ main();`,
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer sk-live-xxxxxxxxxxxxxxxxxxxx" \\
   -d '{
-    "model": "deepseek-chat",
+    "model": "anthropic/claude-opus-5.5",
     "messages": [
       {"role": "user", "content": "Halo dunia AI!"}
     ]
   }'`,
-    },
-    {
-      title: "5. NextChat / LibreChat / n8n",
-      desc: "Gunakan di aplikasi client AI atau workflow automation apa pun:",
-      code: `Model Provider:  OpenAI
-API Endpoint:    ${apiBaseUrl}
-API Key:         sk-live-xxxxxxxxxxxxxxxxxxxx
-Custom Models:   gpt-4o, gpt-4o-mini, claude-3-7-sonnet, deepseek-reasoner, deepseek-chat, gemini-2.5-flash`,
     },
   ];
 
@@ -109,11 +131,11 @@ Custom Models:   gpt-4o, gpt-4o-mini, claude-3-7-sonnet, deepseek-reasoner, deep
         <div className="flex flex-wrap items-center gap-2.5">
           <h1 className="text-2xl font-bold text-zinc-50 tracking-tight">Panduan Integrasi API</h1>
           <span className="text-[11px] font-mono px-2.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/25 font-medium">
-            OpenAI v1 Compatible
+            {models.length}+ Model Live
           </span>
         </div>
         <p className="text-sm text-zinc-400 mt-1">
-          Endpoint gateway {BRAND.fullName} 100% kompatibel dengan spesifikasi OpenAI v1 API. Cukup ganti Base URL & API Key.
+          Endpoint gateway {BRAND.fullName} kompatibel penuh dengan OpenAI v1 API dan otomatis menyinkronkan model terbaru.
         </p>
       </div>
 
@@ -145,10 +167,24 @@ Custom Models:   gpt-4o, gpt-4o-mini, claude-3-7-sonnet, deepseek-reasoner, deep
 
       {/* AVAILABLE MODELS TABLE */}
       <div className="surface-card rounded-xl p-6">
-        <h2 className="text-base font-bold text-zinc-100 mb-2">Model AI yang Tersedia & Tarif</h2>
-        <p className="text-xs text-zinc-400 mb-4">
-          Gunakan ID model di bawah ini pada parameter <code className="text-emerald-400">model</code> di request Anda.
-        </p>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <h2 className="text-base font-bold text-zinc-100">Model AI Tersedia ({models.length}+)</h2>
+            <p className="text-xs text-zinc-400 mt-0.5">
+              Cari ID model terbaru untuk dimasukkan ke parameter <code className="text-emerald-400">model</code>.
+            </p>
+          </div>
+          <div className="relative">
+            <Search className="h-3.5 w-3.5 text-zinc-500 absolute left-3 top-1/2 -translate-y-1/2" />
+            <input
+              type="text"
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Cari model..."
+              className="pl-8 pr-3 py-1.5 rounded-lg bg-[#0c0c0f] border border-zinc-800 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
+            />
+          </div>
+        </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left text-xs">
@@ -162,13 +198,17 @@ Custom Models:   gpt-4o, gpt-4o-mini, claude-3-7-sonnet, deepseek-reasoner, deep
               </tr>
             </thead>
             <tbody className="divide-y divide-zinc-800/70 text-zinc-300">
-              {models.map((m) => (
+              {filteredModels.map((m) => (
                 <tr key={m.id} className="hover:bg-[#15151a] font-mono">
                   <td className="py-2.5 font-bold text-emerald-400">{m.id}</td>
                   <td className="py-2.5 font-sans font-medium text-zinc-100">{m.name}</td>
                   <td className="py-2.5 font-sans text-zinc-400">{m.provider}</td>
-                  <td className="py-2.5 text-zinc-300 tabular-nums">{m.displayInputPrice.split("/")[0]}</td>
-                  <td className="py-2.5 text-zinc-300 tabular-nums">{m.displayOutputPrice.split("/")[0]}</td>
+                  <td className="py-2.5 text-zinc-300 tabular-nums">
+                    {String(m.displayInputPrice).split("/")[0]}
+                  </td>
+                  <td className="py-2.5 text-zinc-300 tabular-nums">
+                    {String(m.displayOutputPrice).split("/")[0]}
+                  </td>
                 </tr>
               ))}
             </tbody>

@@ -2,9 +2,9 @@ export const BRAND = {
   name: "Aksara",
   fullName: "Aksara API",
   shortTag: "API",
-  tagline: "Gerbang API AI Indonesia — Bayar QRIS dalam Rupiah",
+  tagline: "Gerbang API AI Indonesia — 330+ Model Terbaru Bayar QRIS",
   description:
-    "Satu API key standar OpenAI untuk akses Claude 3.7 Sonnet, DeepSeek R1, GPT-4o, OpenAI o3-mini, dan Gemini 2.5 Pro. Tanpa kartu kredit, bayar QRIS mulai Rp 10.000.",
+    "Satu API key standar OpenAI untuk akses 330+ model AI terbaru termasuk Gemini 4 Hydrogen, GPT-6.2 Astra, Claude Opus 5.5, DeepSeek V4.1, dan Grok 4.7. Tanpa kartu kredit, bayar QRIS mulai Rp 10.000.",
   siteUrl: (process.env.NEXT_PUBLIC_APP_URL || "https://ai-api-store-iota.vercel.app").replace(/\/+$/, ""),
   merchantName: "Aiugi, Service",
   nmid: "ID1026641373646",

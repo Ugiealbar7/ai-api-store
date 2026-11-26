@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -31,16 +31,16 @@ export default function HomeClient({ models, faqs }: HomeClientProps) {
   const [activeTab, setActiveTab] = useState<"cursor" | "python" | "node" | "curl">("cursor");
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedModelId, setCopiedModelId] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState<
-    "all" | "reasoning" | "coding" | "flagship" | "fast"
-  >("all");
+  const [selectedFilter, setSelectedFilter] = useState<
+    "featured" | "all" | "Google" | "OpenAI" | "Anthropic" | "open"
+  >("featured");
   const [modelQuery, setModelQuery] = useState("");
+  const [visibleLimit, setVisibleLimit] = useState(15);
   const [tokenMonthlyEstimate, setTokenMonthlyEstimate] = useState<number>(250000);
   const [openFaqIdx, setOpenFaqIdx] = useState<number | null>(0);
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  const appUrl =
-    typeof window !== "undefined" ? window.location.origin : BRAND.siteUrl;
+  const appUrl = typeof window !== "undefined" ? window.location.origin : BRAND.siteUrl;
 
   useEffect(() => {
     fetch("/api/auth/me")
@@ -51,13 +51,17 @@ export default function HomeClient({ models, faqs }: HomeClientProps) {
       .catch(() => {});
   }, []);
 
+  useEffect(() => {
+    setVisibleLimit(15);
+  }, [selectedFilter, modelQuery]);
+
   const codeExamples = {
     cursor: `// Cursor IDE / VS Code Cline / Roo Code
 Base URL: ${appUrl}/api/v1
 API Key:  sk-live-xxxxxxxxxxxxxxxxxxxx
-Model:    claude-3-7-sonnet
-          deepseek-reasoner
-          gpt-4o-mini`,
+Model:    google/gemini-4-hydrogen
+          openai/gpt-6.2-astra
+          anthropic/claude-opus-5.5`,
     python: `from openai import OpenAI
 
 client = OpenAI(
@@ -66,8 +70,8 @@ client = OpenAI(
 )
 
 res = client.chat.completions.create(
-    model="deepseek-reasoner",
-    messages=[{"role": "user", "content": "Audit query SQL ini"}],
+    model="google/gemini-4-hydrogen",
+    messages=[{"role": "user", "content": "Audit arsitektur backend ini"}],
     stream=True
 )
 
@@ -81,7 +85,7 @@ const client = new OpenAI({
 });
 
 const res = await client.chat.completions.create({
-  model: "claude-3-7-sonnet",
+  model: "openai/gpt-6.2-astra",
   messages: [{ role: "user", content: "Buat REST handler Next.js" }],
 });
 
@@ -90,8 +94,8 @@ console.log(res.choices[0].message.content);`,
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer sk-live-xxxxxxxxxxxxxxxxxxxx" \\
   -d '{
-    "model": "gpt-4o-mini",
-    "messages": [{"role": "user", "content": "Ringkas log error ini"}],
+    "model": "anthropic/claude-opus-5.5",
+    "messages": [{"role": "user", "content": "Optimasi SQL query ini"}],
     "stream": true
   }'`,
   };
@@ -120,18 +124,29 @@ console.log(res.choices[0].message.content);`,
     Math.round(((subscriptionCostIdr - estimatedCostIdr) / subscriptionCostIdr) * 100)
   );
 
-  const filteredModels = models.filter((m) => {
-    const matchCategory = selectedCategory === "all" || m.category === selectedCategory;
+  const filteredModels = useMemo(() => {
     const q = modelQuery.trim().toLowerCase();
-    if (!q) return matchCategory;
-    return (
-      matchCategory &&
-      (m.id.toLowerCase().includes(q) ||
-        m.name.toLowerCase().includes(q) ||
-        m.provider.toLowerCase().includes(q) ||
-        m.description.toLowerCase().includes(q))
-    );
-  });
+    return models.filter((m) => {
+      if (q) {
+        return (
+          m.id.toLowerCase().includes(q) ||
+          m.name.toLowerCase().includes(q) ||
+          m.provider.toLowerCase().includes(q) ||
+          m.description.toLowerCase().includes(q)
+        );
+      }
+
+      if (selectedFilter === "featured") return Boolean(m.featured);
+      if (selectedFilter === "all") return true;
+      if (selectedFilter === "open") {
+        return !["Google", "OpenAI", "Anthropic"].includes(m.provider);
+      }
+      return m.provider === selectedFilter;
+    });
+  }, [models, modelQuery, selectedFilter]);
+
+  const displayedModels = filteredModels.slice(0, visibleLimit);
+  const hasMore = filteredModels.length > visibleLimit;
 
   return (
     <div className="min-h-screen bg-[#09090b] text-zinc-100">
@@ -148,21 +163,20 @@ console.log(res.choices[0].message.content);`,
               <div className="lg:col-span-7 space-y-7">
                 <div className="inline-flex items-center gap-2.5 px-3 py-1 rounded-md bg-zinc-900 border border-zinc-800 text-[11px] font-mono text-zinc-300">
                   <span className="h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                  <span>OPENAI V1 GATEWAY</span>
+                  <span>AUTO-SYNC {models.length}+ MODEL LIVE</span>
                   <span className="text-zinc-600">/</span>
                   <span className="text-emerald-400">QRIS RUPIAH</span>
                 </div>
 
                 <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-extrabold tracking-tight text-zinc-50 leading-[1.06]">
-                  Satu API Key untuk 14+ Model AI.{" "}
+                  Satu API Key untuk {models.length}+ Model AI Terbaru.{" "}
                   <span className="text-zinc-400">
                     Bayar <span className="text-zinc-50 underline decoration-emerald-500 decoration-2 underline-offset-8">QRIS dalam Rupiah.</span>
                   </span>
                 </h1>
 
                 <p className="text-base sm:text-lg text-zinc-400 leading-relaxed max-w-2xl">
-                  Pakai <strong className="text-zinc-200 font-semibold">Claude 3.7 Sonnet, DeepSeek R1, GPT-4o, OpenAI o3-mini,</strong> dan{" "}
-                  <strong className="text-zinc-200 font-semibold">Gemini 2.5 Pro</strong> langsung di Cursor IDE, VS Code Cline, n8n, atau kode Python/Node.js Anda — tanpa kartu kredit USD.
+                  Pakai model paling fresh seperti <strong className="text-zinc-200 font-semibold">Gemini 4 Hydrogen, GPT-6.2 Astra, Claude Opus 5.5, DeepSeek V4.1,</strong> dan <strong className="text-zinc-200 font-semibold">Grok 4.7</strong> langsung di Cursor IDE, VS Code Cline, n8n, atau Python/Node.js — tanpa kartu kredit USD.
                 </p>
 
                 <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 pt-1">
@@ -178,26 +192,32 @@ console.log(res.choices[0].message.content);`,
                     <ArrowRight className="h-4 w-4" />
                   </Link>
                   <Link
-                    href="#paket"
+                    href="#models"
                     className="inline-flex items-center justify-center gap-2 bg-[#111114] hover:bg-zinc-900 text-zinc-200 font-medium px-6 py-3.5 rounded-lg border border-zinc-800 hover:border-zinc-700 text-sm transition"
                   >
                     <QrCode className="h-4 w-4 text-emerald-400" />
-                    <span>Pilih Paket Top Up</span>
+                    <span>Jelajahi {models.length}+ Model</span>
                   </Link>
                 </div>
 
                 {/* Crisp Spec Metrics */}
                 <div className="grid grid-cols-3 gap-4 pt-6 border-t border-zinc-800/80 max-w-xl">
                   <div>
-                    <div className="text-xl sm:text-2xl font-bold font-mono text-zinc-50 tabular-nums">14+</div>
-                    <div className="text-xs text-zinc-500 mt-0.5">Model Frontier & Open</div>
+                    <div className="text-xl sm:text-2xl font-bold font-mono text-zinc-50 tabular-nums">
+                      {models.length}+
+                    </div>
+                    <div className="text-xs text-zinc-500 mt-0.5">Model Live Auto-Sync</div>
                   </div>
                   <div>
-                    <div className="text-xl sm:text-2xl font-bold font-mono text-emerald-400 tabular-nums">Rp 10rb</div>
+                    <div className="text-xl sm:text-2xl font-bold font-mono text-emerald-400 tabular-nums">
+                      Rp 10rb
+                    </div>
                     <div className="text-xs text-zinc-500 mt-0.5">Minimal Top Up QRIS</div>
                   </div>
                   <div>
-                    <div className="text-xl sm:text-2xl font-bold font-mono text-zinc-50 tabular-nums">0% Hangus</div>
+                    <div className="text-xl sm:text-2xl font-bold font-mono text-zinc-50 tabular-nums">
+                      Bonus 5%
+                    </div>
                     <div className="text-xs text-zinc-500 mt-0.5">Saldo Aktif Selamanya</div>
                   </div>
                 </div>
@@ -254,7 +274,7 @@ console.log(res.choices[0].message.content);`,
                   <div className="px-4 py-2.5 bg-[#111114] border-t border-zinc-800 flex items-center justify-between text-[11px] font-mono">
                     <span className="flex items-center gap-1.5 text-emerald-400">
                       <Terminal className="h-3.5 w-3.5" />
-                      <span>200 OK • Streaming SSE Aktif</span>
+                      <span>200 OK • Model Baru Auto-Ready</span>
                     </span>
                     <span className="text-zinc-500">Drop-in OpenAI SDK</span>
                   </div>
@@ -268,7 +288,7 @@ console.log(res.choices[0].message.content);`,
         <section className="border-b border-zinc-800/80 bg-[#0c0c0f] py-6">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-4">
             <span className="text-[11px] font-mono uppercase tracking-wider text-zinc-500">
-              Kompatibel langsung tanpa ubah struktur kode
+              Otomatis terbaca di /v1/models untuk
             </span>
             <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-2 text-xs font-mono text-zinc-300">
               <span>Cursor IDE</span>
@@ -371,19 +391,19 @@ console.log(res.choices[0].message.content);`,
           </div>
         </section>
 
-        {/* MODEL CATALOG LEDGER */}
+        {/* MODEL CATALOG LEDGER (LIVE 330+ MODELS) */}
         <section id="models" className="py-20 border-b border-zinc-800/80">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="flex flex-col lg:flex-row lg:items-end justify-between gap-6 mb-10">
               <div>
                 <span className="text-[11px] font-mono uppercase tracking-widest text-zinc-400 block mb-2">
-                  KATALOG MODEL AI TRANSPARAN
+                  SINKRONISASI LIVE OPENROUTER • {models.length}+ MODEL
                 </span>
                 <h2 className="text-3xl sm:text-4xl font-bold text-zinc-50 tracking-tight">
-                  14+ Model Siap Dipanggil dalam Satu Key
+                  Semua Model AI Terbaru Tersedia Otomatis
                 </h2>
                 <p className="text-sm text-zinc-400 mt-2 max-w-xl">
-                  Klik ID model untuk menyalin, lalu langsung pakai di request API Anda. Tarif otomatis dihitung dalam Rupiah.
+                  Cari model apa pun dari Gemini 4 Hydrogen, GPT-6.2 Astra, Claude Opus 5.5, DeepSeek V4.1, hingga model open-source terbaru. Klik ID untuk menyalin.
                 </p>
               </div>
 
@@ -394,24 +414,25 @@ console.log(res.choices[0].message.content);`,
                     type="text"
                     value={modelQuery}
                     onChange={(e) => setModelQuery(e.target.value)}
-                    placeholder="Cari model (claude, deepseek, gpt)..."
-                    className="w-full sm:w-56 pl-8 pr-3 py-2 rounded-lg bg-[#111114] border border-zinc-800 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
+                    placeholder={`Cari dari ${models.length}+ model...`}
+                    className="w-full sm:w-64 pl-8 pr-3 py-2 rounded-lg bg-[#111114] border border-zinc-800 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-zinc-600"
                   />
                 </div>
 
                 <div className="flex flex-wrap items-center gap-1 p-1 bg-[#111114] border border-zinc-800 rounded-lg">
                   {[
+                    { key: "featured", label: "Unggulan Terbaru" },
                     { key: "all", label: `Semua (${models.length})` },
-                    { key: "reasoning", label: "Penalaran" },
-                    { key: "coding", label: "Coding" },
-                    { key: "flagship", label: "Flagship" },
-                    { key: "fast", label: "Hemat" },
+                    { key: "Google", label: "Gemini" },
+                    { key: "OpenAI", label: "OpenAI" },
+                    { key: "Anthropic", label: "Claude" },
+                    { key: "open", label: "DeepSeek & Lainnya" },
                   ].map((tab) => (
                     <button
                       key={tab.key}
-                      onClick={() => setSelectedCategory(tab.key as any)}
+                      onClick={() => setSelectedFilter(tab.key as any)}
                       className={`px-2.5 py-1 rounded text-xs font-medium transition ${
-                        selectedCategory === tab.key
+                        selectedFilter === tab.key && !modelQuery
                           ? "bg-zinc-50 text-zinc-950 font-semibold"
                           : "text-zinc-400 hover:text-zinc-100"
                       }`}
@@ -424,7 +445,7 @@ console.log(res.choices[0].message.content);`,
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {filteredModels.map((m) => (
+              {displayedModels.map((m) => (
                 <article
                   key={m.id}
                   className="surface-card surface-card-hover rounded-xl p-5 flex flex-col justify-between"
@@ -440,9 +461,9 @@ console.log(res.choices[0].message.content);`,
                     </div>
 
                     <div className="flex items-center justify-between gap-2 mb-1">
-                      <h3 className="text-base font-bold text-zinc-50">{m.name}</h3>
+                      <h3 className="text-base font-bold text-zinc-50 line-clamp-1">{m.name}</h3>
                       {m.badge && (
-                        <span className="text-[10px] font-mono text-amber-300 bg-amber-500/10 border border-amber-500/25 px-1.5 py-0.5 rounded">
+                        <span className="text-[10px] font-mono text-amber-300 bg-amber-500/10 border border-amber-500/25 px-1.5 py-0.5 rounded shrink-0">
                           {m.badge}
                         </span>
                       )}
@@ -451,18 +472,18 @@ console.log(res.choices[0].message.content);`,
                     <button
                       type="button"
                       onClick={() => handleCopyModel(m.id)}
-                      className="inline-flex items-center gap-1.5 text-xs font-mono text-emerald-400 hover:text-emerald-300 mb-3 transition"
+                      className="inline-flex items-center gap-1.5 text-xs font-mono text-emerald-400 hover:text-emerald-300 mb-3 transition text-left break-all"
                       title="Klik untuk menyalin Model ID"
                     >
                       <span>{m.id}</span>
                       {copiedModelId === m.id ? (
-                        <Check className="h-3 w-3" />
+                        <Check className="h-3 w-3 shrink-0" />
                       ) : (
-                        <Copy className="h-3 w-3 opacity-70" />
+                        <Copy className="h-3 w-3 opacity-70 shrink-0" />
                       )}
                     </button>
 
-                    <p className="text-xs text-zinc-400 leading-relaxed mb-5">
+                    <p className="text-xs text-zinc-400 leading-relaxed mb-5 line-clamp-3">
                       {m.description}
                     </p>
                   </div>
@@ -491,12 +512,23 @@ console.log(res.choices[0].message.content);`,
               </div>
             )}
 
-            <div className="mt-8 text-center">
+            <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+              {hasMore && (
+                <button
+                  type="button"
+                  onClick={() => setVisibleLimit((prev) => prev + 24)}
+                  className="inline-flex items-center gap-2 text-xs font-semibold bg-zinc-50 hover:bg-zinc-200 text-zinc-950 px-5 py-2.5 rounded-lg transition"
+                >
+                  <span>
+                    Tampilkan Lebih Banyak ({filteredModels.length - visibleLimit} model lagi)
+                  </span>
+                </button>
+              )}
               <Link
                 href="/harga"
                 className="inline-flex items-center gap-2 text-xs font-mono text-zinc-300 hover:text-zinc-50 border border-zinc-800 hover:border-zinc-700 bg-[#111114] px-4 py-2.5 rounded-lg transition"
               >
-                <span>Buka Tabel Perbandingan Harga Lengkap (per 1K & 1M Token)</span>
+                <span>Buka Tabel Pencarian Lengkap {models.length}+ Model</span>
                 <ArrowRight className="h-3.5 w-3.5" />
               </Link>
             </div>
@@ -609,10 +641,10 @@ console.log(res.choices[0].message.content);`,
                         <td className="p-4 sm:p-5 text-emerald-400 font-medium">Mulai Rp 10.000</td>
                       </tr>
                       <tr>
-                        <td className="p-4 sm:p-5 font-medium text-zinc-100">Multi-Provider</td>
-                        <td className="p-4 sm:p-5 text-zinc-500">Top up terpisah di OpenAI, Anthropic, Google</td>
+                        <td className="p-4 sm:p-5 font-medium text-zinc-100">Ketersediaan Model</td>
+                        <td className="p-4 sm:p-5 text-zinc-500">Top up terpisah tiap vendor AI</td>
                         <td className="p-4 sm:p-5 text-emerald-400 font-medium">
-                          1 Akun & 1 API Key untuk 14+ Model
+                          1 API Key untuk {models.length}+ Model Terbaru (Auto-Sync)
                         </td>
                       </tr>
                       <tr>
@@ -674,7 +706,7 @@ console.log(res.choices[0].message.content);`,
         <section className="py-20 bg-[#0c0c0f]">
           <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h2 className="text-3xl sm:text-4xl font-bold text-zinc-50 tracking-tight mb-4">
-              Siap Integrasikan AI ke Aplikasi atau IDE Anda?
+              Siap Integrasikan AI Terbaru ke Aplikasi atau IDE Anda?
             </h2>
             <p className="text-sm sm:text-base text-zinc-400 max-w-xl mx-auto mb-8">
               Buat akun dalam 30 detik, dapatkan API key instan dan saldo uji coba Rp{" "}

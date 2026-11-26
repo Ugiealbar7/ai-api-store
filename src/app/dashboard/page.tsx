@@ -17,12 +17,25 @@ import {
 } from "lucide-react";
 import { AVAILABLE_MODELS } from "@/lib/pricing";
 
+interface LiveModelOption {
+  id: string;
+  name?: string;
+  provider?: string;
+}
+
 export default function DashboardOverviewPage() {
   const [user, setUser] = useState<any>(null);
   const [keys, setKeys] = useState<any[]>([]);
   const [copiedKey, setCopiedKey] = useState<string | null>(null);
+  const [liveModels, setLiveModels] = useState<LiveModelOption[]>(
+    Object.values(AVAILABLE_MODELS).map((m) => ({
+      id: m.id,
+      name: m.name,
+      provider: m.provider,
+    }))
+  );
 
-  const [selectedModel, setSelectedModel] = useState("gpt-4o-mini");
+  const [selectedModel, setSelectedModel] = useState("google/gemini-4-hydrogen");
   const [testPrompt, setTestPrompt] = useState("Sebutkan 3 tips produktif coding.");
   const [testResult, setTestResult] = useState("");
   const [isTesting, setIsTesting] = useState(false);
@@ -40,6 +53,20 @@ export default function DashboardOverviewPage() {
 
   useEffect(() => {
     fetchUserData();
+    fetch("/api/v1/models")
+      .then((res) => res.json())
+      .then((d) => {
+        if (Array.isArray(d?.data) && d.data.length > 0) {
+          setLiveModels(
+            d.data.map((m: any) => ({
+              id: m.id,
+              name: m.name || m.id,
+              provider: m.provider || m.owned_by || "",
+            }))
+          );
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const handleCopy = (keyText: string) => {
@@ -96,7 +123,7 @@ export default function DashboardOverviewPage() {
       <div>
         <h1 className="text-2xl font-bold text-zinc-50 tracking-tight">Ringkasan Dashboard</h1>
         <p className="text-sm text-zinc-400 mt-1">
-          Pantau saldo, kelola API key aktif, dan lakukan pengujian langsung ke gateway.
+          Pantau saldo, kelola API key aktif, dan uji langsung seluruh {liveModels.length}+ model AI terbaru.
         </p>
       </div>
 
@@ -160,7 +187,7 @@ export default function DashboardOverviewPage() {
 
         <div className="surface-card rounded-xl p-5">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs text-zinc-400 font-medium">Endpoint API</span>
+            <span className="text-xs text-zinc-400 font-medium">Endpoint API ({liveModels.length}+ Model)</span>
             <div className="p-2 rounded-lg bg-zinc-900 text-zinc-300 border border-zinc-800">
               <Activity className="h-4 w-4" />
             </div>
@@ -246,30 +273,38 @@ export default function DashboardOverviewPage() {
 
       {/* LIVE QUICK TEST PLAYGROUND */}
       <div className="surface-card rounded-xl p-6">
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3 mb-4">
           <div>
             <h2 className="text-base font-bold text-zinc-50 flex items-center gap-2">
               <Zap className="h-4 w-4 text-emerald-400" />
               <span>Tes Cepat API Langsung di Browser</span>
             </h2>
             <p className="text-xs text-zinc-400 mt-0.5">
-              Kirim request langsung menggunakan API key Anda untuk memastikan gateway berjalan normal.
+              Pilih dari {liveModels.length}+ model AI terbaru atau ketik Model ID OpenRouter langsung.
             </p>
           </div>
 
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-400">Model:</span>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
             <select
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-              className="bg-[#0c0c0f] border border-zinc-800 text-emerald-400 text-xs font-mono rounded-lg px-2.5 py-1.5 focus:outline-none focus:border-zinc-600"
+              value={liveModels.some((m) => m.id === selectedModel) ? selectedModel : "__custom__"}
+              onChange={(e) => {
+                if (e.target.value !== "__custom__") setSelectedModel(e.target.value);
+              }}
+              className="bg-[#0c0c0f] border border-zinc-800 text-emerald-400 text-xs font-mono rounded-lg px-2.5 py-1.5 max-w-xs focus:outline-none focus:border-zinc-600"
             >
-              {Object.keys(AVAILABLE_MODELS).map((mId) => (
-                <option key={mId} value={mId}>
-                  {mId} ({AVAILABLE_MODELS[mId].provider})
+              {liveModels.map((m) => (
+                <option key={m.id} value={m.id}>
+                  {m.id}
                 </option>
               ))}
             </select>
+            <input
+              type="text"
+              value={selectedModel}
+              onChange={(e) => setSelectedModel(e.target.value)}
+              placeholder="atau ketik model ID"
+              className="bg-[#0c0c0f] border border-zinc-800 text-zinc-200 text-xs font-mono rounded-lg px-2.5 py-1.5 w-full sm:w-52 focus:outline-none focus:border-zinc-600"
+            />
           </div>
         </div>
 
