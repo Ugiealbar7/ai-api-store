@@ -13,10 +13,12 @@ model User {
   email     String   @unique
   name      String
   password  String
-  role      String   @default("USER") // USER, ADMIN
-  balance   Float    @default(10000)  // Saldo awal IDR
-  signupIp  String?  // IP pendaftaran untuk mencegah penyalahgunaan saldo uji coba
-  createdAt DateTime @default(now())
+  role             String    @default("USER") // USER, ADMIN
+  balance          Float     @default(10000)  // Saldo awal IDR
+  signupIp         String?   // IP pendaftaran untuk mencegah penyalahgunaan saldo uji coba
+  resetTokenHash   String?   // SHA-256 hash token reset password
+  resetTokenExpiry DateTime? // Masa berlaku token reset password
+  createdAt        DateTime  @default(now())
   updatedAt DateTime @updatedAt
 
   apiKeys      ApiKey[]

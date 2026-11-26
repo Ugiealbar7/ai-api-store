@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { Loader2, ArrowRight } from "lucide-react";
 import BrandLogo from "@/components/BrandLogo";
-import { BRAND, STARTER_TRIAL_BALANCE_IDR } from "@/lib/brand";
+import { STARTER_TRIAL_BALANCE_IDR } from "@/lib/brand";
 
 function getSafeRedirectUrl(): string {
   if (typeof window === "undefined") return "/dashboard";
@@ -81,7 +81,15 @@ export default function LoginPage() {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-zinc-300 mb-1.5">Password</label>
+            <div className="flex items-center justify-between mb-1.5">
+              <label className="block text-xs font-medium text-zinc-300">Password</label>
+              <Link
+                href="/forgot-password"
+                className="text-[11px] text-emerald-400 hover:text-emerald-300 font-medium transition"
+              >
+                Lupa password?
+              </Link>
+            </div>
             <input
               type="password"
               required
@@ -113,19 +121,6 @@ export default function LoginPage() {
           <Link href="/register" className="text-emerald-400 hover:text-emerald-300 font-semibold">
             Daftar (Bonus Uji Rp {STARTER_TRIAL_BALANCE_IDR.toLocaleString("id-ID")})
           </Link>
-        </p>
-        <p className="text-center text-[11px] text-zinc-500 mt-2">
-          Lupa password?{" "}
-          <a
-            href={`https://wa.me/${BRAND.adminWhatsapp.replace(/\D/g, "")}?text=${encodeURIComponent(
-              `Halo Admin ${BRAND.fullName}, saya lupa password akun saya.`
-            )}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-zinc-400 hover:text-zinc-200 underline"
-          >
-            Hubungi Admin WhatsApp
-          </a>
         </p>
       </div>
     </div>

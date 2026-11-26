@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getCurrentUser } from "@/lib/auth";
+import { isEmailConfigured } from "@/lib/mailer";
 import { resolveLiveModel } from "@/lib/openrouter-catalog";
 import { USD_TO_IDR } from "@/lib/pricing";
 import { prisma } from "@/lib/db";
@@ -145,6 +146,7 @@ export async function GET() {
         !midtransKey.includes("demo-key") &&
         !midtransKey.includes("xxxxxxxx"),
       telegramConfigured: Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID),
+      emailResetConfigured: isEmailConfigured(),
     };
 
     return NextResponse.json({

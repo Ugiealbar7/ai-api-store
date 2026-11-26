@@ -36,6 +36,7 @@ interface AutomationStatus {
   qrisWebhookConfigured: boolean;
   midtransConfigured: boolean;
   telegramConfigured: boolean;
+  emailResetConfigured?: boolean;
 }
 
 interface UpstreamMonitor {
@@ -594,6 +595,21 @@ CTA (20-30 detik): "Cek link di bio / kunjungi ${originUrl.replace(/^https?:\/\/
                 }`}
               >
                 {data?.automation?.telegramConfigured ? "✓ AKTIF" : "Opsional (Belum Diset)"}
+              </div>
+            </div>
+
+            <div className="surface-card rounded-xl p-4 md:col-span-3">
+              <div className="text-xs text-zinc-400 mb-1">
+                Email Reset Password Otomatis (Resend / Gmail SMTP)
+              </div>
+              <div
+                className={`text-sm font-mono font-bold ${
+                  data?.automation?.emailResetConfigured ? "text-emerald-400" : "text-amber-400"
+                }`}
+              >
+                {data?.automation?.emailResetConfigured
+                  ? "✓ AKTIF — User bisa reset password mandiri via /forgot-password"
+                  : "Perlu set RESEND_API_KEY atau SMTP_USER + SMTP_PASS (App Password Gmail) di Vercel"}
               </div>
             </div>
           </div>
