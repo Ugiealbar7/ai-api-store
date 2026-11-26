@@ -30,6 +30,16 @@ export async function GET() {
       (t) => t.status === "PENDING" || t.status === "WAITING_CONFIRMATION"
     ).length;
 
+    const midtransKey = process.env.MIDTRANS_SERVER_KEY || "";
+    const automation = {
+      qrisWebhookConfigured: Boolean(process.env.QRIS_WEBHOOK_SECRET),
+      midtransConfigured:
+        Boolean(midtransKey) &&
+        !midtransKey.includes("demo-key") &&
+        !midtransKey.includes("xxxxxxxx"),
+      telegramConfigured: Boolean(process.env.TELEGRAM_BOT_TOKEN && process.env.TELEGRAM_CHAT_ID),
+    };
+
     return NextResponse.json({
       success: true,
       stats: {
@@ -37,6 +47,7 @@ export async function GET() {
         totalRevenue,
         pendingCount,
       },
+      automation,
       transactions,
     });
   } catch (error: any) {

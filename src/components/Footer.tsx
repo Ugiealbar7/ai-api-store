@@ -42,6 +42,11 @@ export default function Footer() {
                   Dokumentasi Integrasi API
                 </Link>
               </li>
+              <li>
+                <Link href="/cursor-ide" className="hover:text-zinc-100 transition">
+                  Panduan Cursor IDE & Cline
+                </Link>
+              </li>
             </ul>
           </div>
 

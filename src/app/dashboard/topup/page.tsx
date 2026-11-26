@@ -17,6 +17,8 @@ import { BRAND, TOPUP_PRESET_AMOUNTS, calculateTopupBonus } from "@/lib/brand";
 
 interface ActiveInvoice {
   transactionId?: string;
+  mode?: "qris_merchant" | "midtrans";
+  paymentUrl?: string;
   orderId: string;
   totalAmount: number;
   baseAmount: number;
@@ -293,12 +295,27 @@ export default function TopUpPage() {
                       <span>{copied ? "Disalin!" : "Salin"}</span>
                     </button>
                   </div>
-                  <div className="mt-2 text-[11px] text-amber-400 flex items-center gap-1.5">
-                    <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-                    <span>
-                      Termasuk kode unik <b>Rp {activeInvoice.uniqueCode}</b> untuk verifikasi otomatis.
-                    </span>
-                  </div>
+                  {activeInvoice.uniqueCode > 0 && (
+                    <div className="mt-2 text-[11px] text-amber-400 flex items-center gap-1.5">
+                      <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
+                      <span>
+                        Termasuk kode unik <b>Rp {activeInvoice.uniqueCode}</b> agar saldo otomatis terdeteksi & langsung masuk.
+                      </span>
+                    </div>
+                  )}
+                  {activeInvoice.mode === "midtrans" && activeInvoice.paymentUrl && (
+                    <div className="mt-3 pt-3 border-t border-zinc-800">
+                      <a
+                        href={activeInvoice.paymentUrl}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="w-full py-2.5 px-4 rounded-lg bg-emerald-500 hover:bg-emerald-400 text-zinc-950 font-semibold text-xs flex items-center justify-center gap-2 transition"
+                      >
+                        <QrCode className="h-4 w-4" />
+                        <span>Buka Halaman Pembayaran Otomatis Midtrans →</span>
+                      </a>
+                    </div>
+                  )}
                   {(activeInvoice.bonusAmount ?? 0) > 0 && (
                     <div className="mt-2 pt-2 border-t border-zinc-800 text-[11px] font-mono text-emerald-400">
                       + Bonus {activeInvoice.bonusPercent}%: Anda akan menerima total{" "}

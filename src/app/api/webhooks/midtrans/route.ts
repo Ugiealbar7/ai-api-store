@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { calculateTopupBonus } from "@/lib/brand";
 import { prisma } from "@/lib/db";
 import crypto from "crypto";
 
@@ -64,7 +65,10 @@ export async function POST(req: Request) {
     }
 
     if (isSuccess) {
-      // Tambah saldo user & tandai transaksi PAID secara atomic
+      const { bonusAmount } = calculateTopupBonus(transaction.amount);
+      const totalCredited = transaction.amount + bonusAmount;
+
+      // Tambah saldo user (+ bonus tier jika memenuhi syarat) & tandai transaksi PAID secara atomic
       await prisma.$transaction([
         prisma.transaction.update({
           where: { id: transaction.id },
@@ -78,13 +82,15 @@ export async function POST(req: Request) {
           where: { id: transaction.userId },
           data: {
             balance: {
-              increment: transaction.amount,
+              increment: totalCredited,
             },
           },
         }),
       ]);
 
-      console.log(`[Midtrans Webhook] Saldo user ${transaction.user.email} bertambah Rp ${transaction.amount}`);
+      console.log(
+        `[Midtrans Webhook] Saldo user ${transaction.user.email} bertambah Rp ${totalCredited}`
+      );
     }
 
     return NextResponse.json({ status: "ok" });
