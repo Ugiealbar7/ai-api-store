@@ -490,18 +490,28 @@ console.log(res.choices[0].message.content);`,
                     </p>
                   </div>
 
-                  <div className="pt-3.5 border-t border-zinc-800/80 grid grid-cols-2 gap-3 text-xs">
-                    <div>
-                      <span className="text-[11px] text-zinc-500 block">Input / 1K token</span>
-                      <span className="font-mono text-zinc-200 font-medium tabular-nums">
-                        {m.displayInputPrice.replace(" / 1K token", "")}
-                      </span>
+                  <div className="pt-3.5 border-t border-zinc-800/80 space-y-2.5 text-xs">
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <span className="text-[11px] text-zinc-500 block">Input / 1K token</span>
+                        <span className="font-mono text-zinc-200 font-medium tabular-nums">
+                          {m.displayInputPrice.replace(" / 1K token", "")}
+                        </span>
+                      </div>
+                      <div className="text-right">
+                        <span className="text-[11px] text-zinc-500 block">Output / 1K token</span>
+                        <span className="font-mono text-zinc-200 font-medium tabular-nums">
+                          {m.displayOutputPrice.replace(" / 1K token", "")}
+                        </span>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <span className="text-[11px] text-zinc-500 block">Output / 1K token</span>
-                      <span className="font-mono text-zinc-200 font-medium tabular-nums">
-                        {m.displayOutputPrice.replace(" / 1K token", "")}
-                      </span>
+                    <div className="pt-2 border-t border-zinc-800/50 flex justify-end">
+                      <Link
+                        href={`/models/${m.id}`}
+                        className="text-[11px] font-mono text-zinc-400 hover:text-emerald-400 transition"
+                      >
+                        Detail Tarif & Kode →
+                      </Link>
                     </div>
                   </div>
                 </article>

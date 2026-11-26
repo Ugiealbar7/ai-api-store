@@ -38,9 +38,30 @@ interface AutomationStatus {
   telegramConfigured: boolean;
 }
 
+interface UpstreamMonitor {
+  connected: boolean;
+  label?: string;
+  limitUsd?: number | null;
+  limitRemainingUsd?: number | null;
+  usageTotalUsd?: number;
+  usageDailyUsd?: number;
+  usageMonthlyUsd?: number;
+  error?: string;
+}
+
 export default function AdminPage() {
   const [data, setData] = useState<{
-    stats: { totalUsers: number; totalRevenue: number; pendingCount: number };
+    stats: {
+      totalUsers: number;
+      totalRevenue: number;
+      pendingCount: number;
+      totalCustomerBalancesIdr?: number;
+      totalBilledUsageIdr?: number;
+      estimatedGrossProfitIdr?: number;
+      totalApiRequests?: number;
+      totalTokensServed?: number;
+    };
+    upstream?: UpstreamMonitor;
     automation?: AutomationStatus;
     transactions: AdminTx[];
   } | null>(null);
@@ -277,6 +298,58 @@ CTA (20-30 detik): "Cek link di bio / kunjungi ${originUrl.replace(/^https?:\/\/
           <Megaphone className="h-3.5 w-3.5" />
           <span>Kit Promosi Publik</span>
         </button>
+      </div>
+
+      {/* PROFIT & UPSTREAM OPENROUTER MONITOR */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="surface-card rounded-xl p-5">
+          <span className="text-[11px] font-mono uppercase text-zinc-400 block mb-1">
+            Pemakaian API & Est. Laba Kotor
+          </span>
+          <div className="text-xl font-bold text-emerald-400 font-mono tabular-nums">
+            +Rp {(data?.stats.estimatedGrossProfitIdr ?? 0).toLocaleString("id-ID")}
+          </div>
+          <p className="text-[11px] text-zinc-400 font-mono mt-1.5">
+            Omzet Token: Rp {(data?.stats.totalBilledUsageIdr ?? 0).toLocaleString("id-ID")} •{" "}
+            {(data?.stats.totalApiRequests ?? 0).toLocaleString("id-ID")} req
+          </p>
+        </div>
+
+        <div className="surface-card rounded-xl p-5">
+          <span className="text-[11px] font-mono uppercase text-zinc-400 block mb-1">
+            Total Saldo Mengendap di User
+          </span>
+          <div className="text-xl font-bold text-zinc-100 font-mono tabular-nums">
+            Rp {(data?.stats.totalCustomerBalancesIdr ?? 0).toLocaleString("id-ID")}
+          </div>
+          <p className="text-[11px] text-zinc-500 mt-1.5">
+            Total kredit Rupiah aktif milik seluruh user saat ini.
+          </p>
+        </div>
+
+        <div className="surface-card rounded-xl p-5 border-emerald-500/25">
+          <span className="text-[11px] font-mono uppercase text-zinc-400 block mb-1">
+            Monitor Key OpenRouter (Upstream)
+          </span>
+          {data?.upstream?.connected ? (
+            <>
+              <div className="text-xl font-bold text-zinc-50 font-mono tabular-nums">
+                {data.upstream.limitRemainingUsd !== null &&
+                data.upstream.limitRemainingUsd !== undefined
+                  ? `$${data.upstream.limitRemainingUsd.toFixed(2)} Sisa Limit`
+                  : `$${(data.upstream.usageTotalUsd ?? 0).toFixed(4)} Terpakai`}
+              </div>
+              <p className="text-[11px] text-emerald-400 font-mono mt-1.5">
+                Hari ini: ${(data.upstream.usageDailyUsd ?? 0).toFixed(4)} • Bulan ini: $
+                {(data.upstream.usageMonthlyUsd ?? 0).toFixed(4)}
+              </p>
+            </>
+          ) : (
+            <div className="text-xs text-amber-400 font-mono mt-1">
+              {data?.upstream?.error || "Status key belum tersedia"}
+            </div>
+          )}
+        </div>
       </div>
 
       {/* STATS OVERVIEW */}

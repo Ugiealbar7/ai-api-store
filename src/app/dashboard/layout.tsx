@@ -12,6 +12,7 @@ import {
   LogOut,
   ShieldCheck,
   ChevronRight,
+  Settings,
 } from "lucide-react";
 import BrandLogo from "@/components/BrandLogo";
 
@@ -39,6 +40,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { label: "Top Up Saldo", href: "/dashboard/topup", icon: Wallet },
     { label: "Dokumentasi", href: "/dashboard/docs", icon: BookOpen },
     { label: "Riwayat Penggunaan", href: "/dashboard/usage", icon: Activity },
+    { label: "Pengaturan Akun", href: "/dashboard/settings", icon: Settings },
     ...(user?.role === "ADMIN"
       ? [{ label: "Admin Panel", href: "/dashboard/admin", icon: ShieldCheck }]
       : []),

@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Check, Copy, Search } from "lucide-react";
 import { USD_TO_IDR, type ModelPricing } from "@/lib/pricing";
 
@@ -99,7 +100,12 @@ export default function HargaCatalogClient({ models }: { models: DisplayModel[] 
                 return (
                   <tr key={m.id} className="hover:bg-[#15151a] transition">
                     <td className="p-4">
-                      <div className="font-semibold text-zinc-100">{m.name}</div>
+                      <Link
+                        href={`/models/${m.id}`}
+                        className="font-semibold text-zinc-100 hover:text-emerald-400 transition block"
+                      >
+                        {m.name}
+                      </Link>
                       <div className="text-[11px] text-zinc-500">{m.provider}</div>
                     </td>
                     <td className="p-4 font-mono text-xs">

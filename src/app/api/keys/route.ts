@@ -16,6 +16,7 @@ export async function GET() {
       key: true,
       isActive: true,
       totalSpent: true,
+      spendingLimit: true,
       createdAt: true,
       lastUsedAt: true,
     },
@@ -31,8 +32,10 @@ export async function POST(req: Request) {
   try {
     const body = await req.json().catch(() => ({}));
     const name = body.name?.trim() || "API Key Baru";
+    const rawLimit = Number(body.spendingLimit);
+    const spendingLimit =
+      Number.isFinite(rawLimit) && rawLimit > 0 ? Math.round(rawLimit) : null;
 
-    // Generate random key format sk-live-xxxxxxxxxxxxxxxxxxxx
     const key = `sk-live-${crypto.randomBytes(16).toString("hex")}`;
 
     const newKey = await prisma.apiKey.create({
@@ -40,6 +43,7 @@ export async function POST(req: Request) {
         userId: user.id,
         name,
         key,
+        spendingLimit,
       },
     });
 

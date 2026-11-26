@@ -11,12 +11,14 @@ import {
   Power,
   Eye,
   EyeOff,
+  SlidersHorizontal,
 } from "lucide-react";
 
 export default function KeysPage() {
   const [keys, setKeys] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [newKeyName, setNewKeyName] = useState("");
+  const [newKeyLimit, setNewKeyLimit] = useState("");
   const [creating, setCreating] = useState(false);
   const [togglingId, setTogglingId] = useState<string | null>(null);
   const [justCreatedKey, setJustCreatedKey] = useState<string | null>(null);
@@ -44,13 +46,17 @@ export default function KeysPage() {
       const res = await fetch("/api/keys", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newKeyName }),
+        body: JSON.stringify({
+          name: newKeyName,
+          spendingLimit: newKeyLimit ? Number(newKeyLimit) : null,
+        }),
       });
 
       const data = await res.json();
       if (res.ok && data.key) {
         setJustCreatedKey(data.key.key);
         setNewKeyName("");
+        setNewKeyLimit("");
         fetchKeys();
       }
     } finally {
@@ -72,6 +78,24 @@ export default function KeysPage() {
     } finally {
       setTogglingId(null);
     }
+  };
+
+  const handleEditLimit = async (k: any) => {
+    const current = k.spendingLimit ? String(k.spendingLimit) : "";
+    const input = prompt(
+      `Atur batas maksimal pengeluaran (Rp) untuk key "${k.name}". Kosongkan atau isi 0 untuk tanpa batas:`,
+      current
+    );
+    if (input === null) return;
+    const num = Number(input.trim());
+    const nextLimit = !input.trim() || isNaN(num) || num <= 0 ? null : Math.round(num);
+
+    const res = await fetch(`/api/keys/${k.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ spendingLimit: nextLimit }),
+    });
+    if (res.ok) fetchKeys();
   };
 
   const handleDelete = async (id: string) => {
@@ -96,26 +120,35 @@ export default function KeysPage() {
       <div>
         <h1 className="text-2xl font-bold text-zinc-50 tracking-tight">Kelola API Key</h1>
         <p className="text-sm text-zinc-400 mt-1">
-          Gunakan API key ini di Cursor IDE, VS Code Cline, n8n, Python, Node.js, atau aplikasi Anda.
+          Buat beberapa API key dan atur batas pengeluaran opsional per proyek (Cursor, OpenClaw, Hermes, atau Bot).
         </p>
       </div>
 
       {/* CREATE NEW KEY CARD */}
       <div className="surface-card rounded-xl p-6">
         <h2 className="text-base font-semibold text-zinc-100 mb-3">Buat API Key Baru</h2>
-        <form onSubmit={handleCreate} className="flex flex-col sm:flex-row gap-3">
+        <form onSubmit={handleCreate} className="grid grid-cols-1 sm:grid-cols-12 gap-3">
           <input
             type="text"
             required
             value={newKeyName}
             onChange={(e) => setNewKeyName(e.target.value)}
-            placeholder="Contoh: Cursor IDE / Bot WhatsApp / NextChat"
-            className="flex-1 px-4 py-2.5 rounded-lg bg-[#0c0c0f] border border-zinc-800 text-zinc-100 text-sm focus:outline-none focus:border-zinc-600"
+            placeholder="Nama Key (mis. Cursor IDE / OpenClaw)"
+            className="sm:col-span-6 px-4 py-2.5 rounded-lg bg-[#0c0c0f] border border-zinc-800 text-zinc-100 text-sm focus:outline-none focus:border-zinc-600"
+          />
+          <input
+            type="number"
+            min="0"
+            step="5000"
+            value={newKeyLimit}
+            onChange={(e) => setNewKeyLimit(e.target.value)}
+            placeholder="Batas Limit Rp (Opsional)"
+            className="sm:col-span-3 px-4 py-2.5 rounded-lg bg-[#0c0c0f] border border-zinc-800 text-zinc-100 text-sm font-mono focus:outline-none focus:border-zinc-600"
           />
           <button
             type="submit"
             disabled={creating}
-            className="px-6 py-2.5 rounded-lg bg-zinc-50 hover:bg-zinc-200 text-zinc-950 font-semibold text-xs flex items-center justify-center gap-2 transition disabled:opacity-50 shrink-0"
+            className="sm:col-span-3 px-5 py-2.5 rounded-lg bg-zinc-50 hover:bg-zinc-200 text-zinc-950 font-semibold text-xs flex items-center justify-center gap-2 transition disabled:opacity-50"
           >
             {creating ? <Loader2 className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
             <span>Buat Key Baru</span>
@@ -159,7 +192,7 @@ export default function KeysPage() {
                   <th className="p-4">Nama Key</th>
                   <th className="p-4">Secret Key</th>
                   <th className="p-4">Status</th>
-                  <th className="p-4">Total Biaya</th>
+                  <th className="p-4">Terpakai / Limit</th>
                   <th className="p-4">Terakhir Dipakai</th>
                   <th className="p-4 text-right">Aksi</th>
                 </tr>
@@ -199,14 +232,27 @@ export default function KeysPage() {
                               ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 hover:bg-emerald-500/20"
                               : "bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500/20"
                           }`}
-                          title="Klik untuk ubah status aktif/nonaktif"
                         >
                           <Power className="h-3 w-3" />
                           <span>{k.isActive ? "Aktif" : "Nonaktif"}</span>
                         </button>
                       </td>
-                      <td className="p-4 font-mono text-emerald-400 tabular-nums">
-                        Rp {k.totalSpent?.toLocaleString("id-ID") || 0}
+                      <td className="p-4 font-mono tabular-nums">
+                        <div className="flex items-center gap-2">
+                          <span className="text-emerald-400">
+                            Rp {k.totalSpent?.toLocaleString("id-ID") || 0}
+                          </span>
+                          <span className="text-zinc-500">
+                            / {k.spendingLimit ? `Rp ${k.spendingLimit.toLocaleString("id-ID")}` : "∞"}
+                          </span>
+                          <button
+                            onClick={() => handleEditLimit(k)}
+                            title="Atur Batas Limit"
+                            className="text-zinc-400 hover:text-zinc-100 transition"
+                          >
+                            <SlidersHorizontal className="h-3 w-3" />
+                          </button>
+                        </div>
                       </td>
                       <td className="p-4 text-zinc-500">
                         {k.lastUsedAt

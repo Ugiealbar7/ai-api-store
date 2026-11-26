@@ -17,11 +17,21 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
     return NextResponse.json({ error: "API key tidak ditemukan." }, { status: 404 });
   }
 
+  let nextLimit = existing.spendingLimit;
+  if ("spendingLimit" in body) {
+    if (body.spendingLimit === null || body.spendingLimit === "" || Number(body.spendingLimit) <= 0) {
+      nextLimit = null;
+    } else if (Number.isFinite(Number(body.spendingLimit))) {
+      nextLimit = Math.round(Number(body.spendingLimit));
+    }
+  }
+
   const updated = await prisma.apiKey.update({
     where: { id },
     data: {
       isActive: typeof body.isActive === "boolean" ? body.isActive : existing.isActive,
       name: body.name ? body.name.trim() : existing.name,
+      spendingLimit: nextLimit,
     },
   });
 

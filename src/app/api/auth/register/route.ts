@@ -6,6 +6,19 @@ import crypto from "crypto";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
+function getClientIp(req: Request): string | null {
+  const xff = req.headers.get("x-forwarded-for");
+  if (xff) {
+    const first = xff.split(",")[0]?.trim();
+    if (first) return first;
+  }
+  const realIp = req.headers.get("x-real-ip")?.trim();
+  if (realIp) return realIp;
+  const cfIp = req.headers.get("cf-connecting-ip")?.trim();
+  if (cfIp) return cfIp;
+  return null;
+}
+
 export async function POST(req: Request) {
   try {
     const { name, email, password } = await req.json();
@@ -39,6 +52,25 @@ export async function POST(req: Request) {
       return NextResponse.json({ error: "Email sudah terdaftar. Silakan masuk." }, { status: 400 });
     }
 
+    // Proteksi batas bonus saldo uji coba per IP dalam 7 hari terakhir (maks. 2 akun berbonus per IP)
+    const clientIp = getClientIp(req);
+    let initialBalance = STARTER_TRIAL_BALANCE_IDR;
+    let trialGranted = true;
+
+    if (clientIp) {
+      const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000);
+      const recentSignupsFromIp = await prisma.user.count({
+        where: {
+          signupIp: clientIp,
+          createdAt: { gte: sevenDaysAgo },
+        },
+      });
+      if (recentSignupsFromIp >= 2) {
+        initialBalance = 0;
+        trialGranted = false;
+      }
+    }
+
     const hashedPassword = await hashPassword(password);
 
     const user = await prisma.user.create({
@@ -46,7 +78,8 @@ export async function POST(req: Request) {
         name: cleanName,
         email: cleanEmail,
         password: hashedPassword,
-        balance: STARTER_TRIAL_BALANCE_IDR,
+        balance: initialBalance,
+        signupIp: clientIp,
         apiKeys: {
           create: {
             name: "Default Key",
@@ -58,9 +91,14 @@ export async function POST(req: Request) {
 
     const token = await signToken({ userId: user.id, email: user.email, role: user.role });
 
+    const message = trialGranted
+      ? `Registrasi berhasil! Saldo uji coba Rp ${STARTER_TRIAL_BALANCE_IDR.toLocaleString("id-ID")} sudah aktif.`
+      : "Registrasi berhasil! Kuota saldo uji coba gratis dari jaringan ini sudah dipakai — silakan Top Up QRIS mulai Rp 10.000.";
+
     const response = NextResponse.json({
       success: true,
-      message: `Registrasi berhasil! Saldo uji coba Rp ${STARTER_TRIAL_BALANCE_IDR.toLocaleString("id-ID")} sudah aktif.`,
+      trialGranted,
+      message,
       user: { id: user.id, name: user.name, email: user.email, balance: user.balance },
     });
 

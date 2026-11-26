@@ -123,8 +123,25 @@ providers:
     api_key: sk-live-xxxxxxxxxxxxxxxxxxxx`,
     },
     {
-      title: "6. cURL / Terminal Shell",
-      desc: "Uji cepat endpoint langsung dari terminal atau CI/CD (URL /api/v1 maupun /v1 keduanya aktif):",
+      title: "6. Anthropic Messages (/v1/messages) & Claude Code CLI",
+      desc: "Endpoint native Anthropic tersedia untuk SDK Anthropic maupun Claude Code CLI:",
+      code: `export ANTHROPIC_BASE_URL="${apiBaseUrl.replace(/\/api\/v1$/, "")}/api"
+export ANTHROPIC_API_KEY="sk-live-xxxxxxxxxxxxxxxxxxxx"
+
+# Atau panggil langsung POST ${apiBaseUrl}/messages
+curl ${apiBaseUrl}/messages \\
+  -H "Content-Type: application/json" \\
+  -H "x-api-key: sk-live-xxxxxxxxxxxxxxxxxxxx" \\
+  -H "anthropic-version: 2023-06-01" \\
+  -d '{
+    "model": "anthropic/claude-opus-5.5",
+    "max_tokens": 512,
+    "messages": [{"role": "user", "content": "Halo Claude!"}]
+  }'`,
+    },
+    {
+      title: "7. cURL / Terminal Shell (OpenAI Chat & Responses)",
+      desc: "Uji cepat endpoint langsung dari terminal (/chat/completions maupun /responses):",
       code: `curl ${apiBaseUrl}/chat/completions \\
   -H "Content-Type: application/json" \\
   -H "Authorization: Bearer sk-live-xxxxxxxxxxxxxxxxxxxx" \\

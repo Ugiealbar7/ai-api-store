@@ -14,7 +14,8 @@ model User {
   name      String
   password  String
   role      String   @default("USER") // USER, ADMIN
-  balance   Float    @default(10000)  // Saldo awal IDR (Rp 10.000 gratis untuk coba API!)
+  balance   Float    @default(10000)  // Saldo awal IDR
+  signupIp  String?  // IP pendaftaran untuk mencegah penyalahgunaan saldo uji coba
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -28,9 +29,10 @@ model ApiKey {
   userId     String
   key        String    @unique // sk-live-...
   name       String    @default("Default Key")
-  isActive   Boolean   @default(true)
-  totalSpent Float     @default(0) // Total rupiah terpakai oleh key ini
-  createdAt  DateTime  @default(now())
+  isActive      Boolean   @default(true)
+  totalSpent    Float     @default(0) // Total rupiah terpakai oleh key ini
+  spendingLimit Float?    // Batas maksimal pemakaian (IDR) opsional untuk key ini
+  createdAt     DateTime  @default(now())
   lastUsedAt DateTime?
 
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)

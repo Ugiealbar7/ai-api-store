@@ -6,7 +6,19 @@ export default function robots(): MetadataRoute.Robots {
     rules: [
       {
         userAgent: "*",
-        allow: ["/", "/harga", "/docs", "/cursor-ide", "/openclaw-hermes", "/login", "/register"],
+        allow: [
+          "/",
+          "/harga",
+          "/docs",
+          "/models/",
+          "/cursor-ide",
+          "/openclaw-hermes",
+          "/status",
+          "/syarat-ketentuan",
+          "/privasi",
+          "/login",
+          "/register",
+        ],
         disallow: ["/dashboard/", "/api/"],
       },
     ],

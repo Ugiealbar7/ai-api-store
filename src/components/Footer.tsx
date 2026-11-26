@@ -52,6 +52,11 @@ export default function Footer() {
                   Panduan OpenClaw & Hermes Agent
                 </Link>
               </li>
+              <li>
+                <Link href="/status" className="hover:text-zinc-100 transition">
+                  Status Layanan Live
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -73,6 +78,16 @@ export default function Footer() {
               <li>
                 <Link href="/dashboard/topup" className="hover:text-zinc-100 transition">
                   Top Up Saldo QRIS
+                </Link>
+              </li>
+              <li>
+                <Link href="/syarat-ketentuan" className="hover:text-zinc-100 transition">
+                  Syarat & Ketentuan
+                </Link>
+              </li>
+              <li>
+                <Link href="/privasi" className="hover:text-zinc-100 transition">
+                  Kebijakan Privasi
                 </Link>
               </li>
               <li>
